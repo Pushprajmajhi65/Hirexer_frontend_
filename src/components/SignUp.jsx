@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import api from "../api"; // Assuming you have your api.js set up for API requests
+import { Link, useNavigate } from "react-router-dom";
+import api from "../api"; // Import your api.js for handling requests
+import toast from "react-hot-toast";
 import circles from "../images/Commonimg/circles.png";
 import letterSend from "../images/SignUpImages/letter_send.png";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 
 export const SignUpPage = () => {
   const [userName, setUserName] = useState("");
@@ -15,6 +14,7 @@ export const SignUpPage = () => {
   const [passwordStrength, setPasswordStrength] = useState(0);
   const navigate = useNavigate();
 
+  // Function to check password strength
   function passwordChecker(password) {
     let strength = 0;
     let missingCriteria = [];
@@ -47,35 +47,50 @@ export const SignUpPage = () => {
     return missingCriteria; // Return missing criteria
   }
 
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Check password requirements
     const missingCriteria = passwordChecker(password);
-
     if (missingCriteria.length > 0) {
       toast.error(`Password is missing: ${missingCriteria.join(", ")}`);
       return;
     }
 
     try {
-      // Call API and navigate if successful
+      // Use the correct API call method
+      const response = await api.post("/auth/register/", {
+        username: userName,
+        email,
+        password,
+      });
+
       toast.success("Registration Completed");
+      setSuccess("Registration completed successfully!");
       navigate("/onBoarding");
     } catch (err) {
-      setError(err.response?.data?.error || "Registration failed");
-      toast.error("Failed to create account");
+      console.error('Error during registration:', err.response ? err.response.data : err);
+
+      if (err.response) {
+        const errorMessage = err.response.data?.error || "Registration failed";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } else {
+        setError("An unexpected error occurred");
+        toast.error("An unexpected error occurred");
+      }
+
       setSuccess("");
     }
   };
 
+  // Render password strength bars
   const renderStrengthBars = () => {
     return Array.from({ length: 4 }).map((_, index) => (
       <div
         key={index}
-        className={`h-2 flex-1 mx-1 rounded ${
-          index < passwordStrength ? "bg-greenColor" : "bg-borderGray"
-        }`}
+        className={`h-2 flex-1 mx-1 rounded ${index < passwordStrength ? "bg-greenColor" : "bg-borderGray"}`}
       ></div>
     ));
   };
@@ -88,7 +103,6 @@ export const SignUpPage = () => {
           className="absolute top-[570px] left-[450px] z-50 w-0 xl:w-[250px]"
           alt="Letter decoration"
         />
-
         <div className="w-full xl:w-[1002px] h-auto xl:h-[645px] bg-white flex flex-col xl:flex-row">
           <div className="hidden xl:flex xl:w-[490px] h-[645px] bg-greenColor rounded-xl justify-end items-end">
             <img className="w-[269px]" src={circles} alt="Circles decoration" />

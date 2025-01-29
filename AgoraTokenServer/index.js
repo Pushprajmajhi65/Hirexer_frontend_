@@ -3,7 +3,7 @@ const cors = require("cors");
 
 const { RtcTokenBuilder, RtcRole } = require("agora-access-token");
 
-const PORT = 8081;
+const PORT = process.env.PORT || 8081;
 const APP_ID = "ceb1bedabb974f439c26722f9f6d2b97";
 const APP_CERTIFICATE = "ab07008e8ccc491f992ad972b0720911";
 

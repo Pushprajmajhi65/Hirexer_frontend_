@@ -1,12 +1,12 @@
 import continueImage from "../images/onBoarding/continueBlack.png";
 import welcome from "../images/onBoarding/Welcome.png";
-import mailCard from "../images/onBoarding/mailCard.png";
+
 import add from "../images/onBoarding/add.png";
 import group from "../images/onBoarding/groupimg.png";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import mailCard from "../images/onBoarding/mailCard.png";
 export const OnBoardingOne = () => {
   return (
     <div className="relative flex items-center justify-center w-screen h-screen font-poppins">
@@ -93,10 +93,12 @@ export const OnBoardingTwo = () => {
 
       setSuccess("Workspace created successfully!");
       setError("");
+      toast.success("Workspace created successfully!");
     } catch (err) {
       setError(err.response?.data?.error || "Workspace creation failed");
       setSuccess("");
       navigate("/Onboarding-phase-two");
+    
     }
   };
 
@@ -270,7 +272,8 @@ export const OnBoardingThree = () => {
   return (
     <div className="relative flex items-center justify-center w-screen h-screen font-poppins">
       <div className="w-[90%] max-w-[780px] h-auto md:h-[640px] bg-white flex flex-col rounded-2xl items-center justify-top relative px-6 sm:px-8 md:px-12 py-8 sm:py-12 md:py-16 gap-[24px] md:gap-[32px]">
-        <img src={mailCard} className="w-[96px] sm:w-[120px] md:w-[144px]" />
+        <img src={mailCard} 
+        className="w-[96px] sm:w-[120px] md:w-[144px]" />
         <h1 className="text-[24px] sm:text-[28px] md:text-[36px] font-bold text-headerGray text-center">
           Invite members to workspace
         </h1>

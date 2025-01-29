@@ -12,19 +12,38 @@ export const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  // Handle form submission for login
+
   const navigate = useNavigate();
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    const loginData = {
+      email: email,
+      password: password,
+    };
+
     try {
+      // Use the custom `api` instance for the login request
+      const response = await api.post('/auth/login/', loginData);
+      
+      // Save tokens in localStorage
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+
+      // Navigate to another page after successful login
       navigate("/overview");
-      toast.success("Loged In");
+
+      // Show success message
+      toast.success("Logged In Successfully");
     } catch (err) {
+      // Handle errors
       setError(err.response?.data?.error || "Login failed");
       toast.error("Wrong Password or Email");
       setSuccess(""); // Clear any previous success messages
     }
   };
+
 
   return (
     <div className="flex items-center justify-center w-screen h-screen font-poppins">

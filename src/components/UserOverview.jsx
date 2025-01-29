@@ -10,10 +10,14 @@ import { useState } from "react";
 import navicon from "../images/Commonimg/navicon.png";
 import { MoreProfileOptions } from "./profile";
 
+
 export const UserOverviewUI = () => {
   const [showNavBar, setShowNavBar] = useState(false);
   const toggleNavBar = () => {
     setShowNavBar((prev) => !prev);
+
+
+    
   };
 
   return (
@@ -39,7 +43,7 @@ export const UserOverviewUI = () => {
           <h1 className="text-[30px] font-semibold text-textPrimary">
             Good Morning,
             <br />
-            Pushpraj
+            Pushpraj 
           </h1>
           <div className="md:ml-auto w-[214px] h-full p-4 flex flex-col items-center justify-center gap-2">
             <div className="flex items-center gap-8">
