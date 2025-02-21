@@ -6,7 +6,6 @@ import messageIcon from "../images/resetPageImg/messageIcon.png";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-
 export const NewPasswordSet = () => {
   const [newPassword, setNewPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");

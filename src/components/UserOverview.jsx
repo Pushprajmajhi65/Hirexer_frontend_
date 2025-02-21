@@ -196,6 +196,21 @@ export const NavBar = () => {
           <img src={meeting} className="w-5 h-5" />
           Meetings
         </Link>
+
+        <Link
+          to="/employee"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+        >
+          <img src={meeting} className="w-5 h-5" />
+          Employees
+        </Link>
+        <Link
+          to="/profile"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+        >
+          <img src={meeting} className="w-5 h-5" />
+          Profile
+        </Link>
       </div>
     </div>
   );

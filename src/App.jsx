@@ -17,6 +17,7 @@ import { Employee } from "./components/employee";
 import { MyProfile } from "./components/profile";
 import { LiveVideo } from "./components/liveVideo";
 import AgoraRTC, { AgoraRTCProvider, useRTCClient } from "agora-rtc-react";
+import { WorkspaceProvider } from "./components/WorkspaceContext"; // Import the WorkspaceProvider
 
 function App() {
   const navigate = useNavigate();
@@ -33,42 +34,44 @@ function App() {
   };
 
   return (
-    <Routes>
-      {/* Main routes */}
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/reset-password" element={<PasswordReset />} />
-      <Route path="/set-password" element={<NewPasswordSet />} />
-      <Route path="/passwordchanged" element={<PasswordResetSuccess />} />
-      <Route path="/Sign-up" element={<SignUpPage />} />
-      <Route path="/Onboarding" element={<OnBoardingOne />} />
-      <Route path="/Onboarding-phase-one" element={<OnBoardingTwo />} />
-      <Route path="/Onboarding-phase-two" element={<OnBoardingThree />} />
-      <Route path="/Onboarding-phase-three" element={<OnBoardingFour />} />
-      <Route path="/overview" element={<UserOverviewUI />} />
-      <Route path="/feed" element={<FeedUI />} />
-      <Route path="/employee" element={<Employee />} />
-      <Route path="/profile" element={<MyProfile />} />
+    <WorkspaceProvider> {/* Wrap the entire app with WorkspaceProvider */}
+      <Routes>
+        {/* Main routes */}
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/reset-password" element={<PasswordReset />} />
+        <Route path="/set-password" element={<NewPasswordSet />} />
+        <Route path="/passwordchanged" element={<PasswordResetSuccess />} />
+        <Route path="/Sign-up" element={<SignUpPage />} />
+        <Route path="/Onboarding" element={<OnBoardingOne />} />
+        <Route path="/Onboarding-phase-one" element={<OnBoardingTwo />} />
+        <Route path="/Onboarding-phase-two" element={<OnBoardingThree />} />
+        <Route path="/Onboarding-phase-three" element={<OnBoardingFour />} />
+        <Route path="/overview" element={<UserOverviewUI />} />
+        <Route path="/feed" element={<FeedUI />} />
+        <Route path="/employee" element={<Employee />} />
+        <Route path="/profile" element={<MyProfile />} />
 
-      {/* Agora RTC-related routes */}
-      <Route
-        path="/meeting"
-        element={<MeetingUI connectToVideo={handleConnect} />}
-      />
-      <Route
-        path="/via/:channelName"
-        element={
-          <AgoraRTCProvider client={agoraClient}>
-            <LiveVideo />
-          </AgoraRTCProvider>
-        }
-      />
+        {/* Agora RTC-related routes */}
+        <Route
+          path="/meeting"
+          element={<MeetingUI connectToVideo={handleConnect} />}
+        />
+        <Route
+          path="/via/:channelName"
+          element={
+            <AgoraRTCProvider client={agoraClient}>
+              <LiveVideo />
+            </AgoraRTCProvider>
+          }
+        />
 
-      {/* Connect form route */}
-      {/* <Route
-        path="/connect"
-        element={<ConnectForm connectToVideo={handleConnect} />}
-      /> */}
-    </Routes>
+        {/* Connect form route */}
+        {/* <Route
+          path="/connect"
+          element={<ConnectForm connectToVideo={handleConnect} />}
+        /> */}
+      </Routes>
+    </WorkspaceProvider>
   );
 }
 

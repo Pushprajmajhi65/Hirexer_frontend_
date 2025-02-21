@@ -1,4 +1,8 @@
+import { useState, useEffect } from "react";
+
+import { useWorkspace } from "./WorkspaceContext"; // Import the workspace context
 import remove from "../images/Commonimg/remove.png";
+
 import {
   Dialog,
   DialogContent,
@@ -79,52 +83,85 @@ export const ManageEmployeeCard = () => {
     </div>
   );
 };
-
 export const EmployeeTable = () => {
+  const { activeWorkspace } = useWorkspace(); // Get the active workspace
+  const [members, setMembers] = useState([]); // State to store members
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!activeWorkspace) return; // Exit if no active workspace
+
+      try {
+        const accessToken = localStorage.getItem("access_token"); // Get JWT token
+        const response = await api.get(
+          `/api/workspaces/${activeWorkspace.id}/members/`, // Endpoint to fetch members
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`, // Include JWT token
+            },
+          }
+        );
+        setMembers(response.data); // Set members in state
+      } catch (error) {
+        console.error("Error fetching members:", error);
+      }
+    };
+
+    fetchMembers();
+  }, [activeWorkspace]); // Re-fetch when active workspace changes
+
+  if (!activeWorkspace) {
+    return <p>No active workspace selected.</p>;
+  }
+
   return (
     <div>
-      <div className="flex items-center w-[1100px] h-[72px] border-t border-b">
-        <h2 className="text-center w-14 h-fit text-textBlack text-[15px] font-medium">
-          1
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[296px] flex gap-[12px] items-center">
-          <div className="w-10 h-10 border rounded-full"></div>
-          <div>
-            <p>Aalok Shah</p>
-            <p className="text-xs text-textSecondary">
-              aalok.shah@zstudioo.com
+      {members.map((member, index) => (
+        <div
+          key={member.id}
+          className="flex items-center w-[1100px] h-[72px] border-t border-b"
+        >
+          <h2 className="text-center w-14 h-fit text-textBlack text-[15px] font-medium">
+            {index + 1}
+          </h2>
+          <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[296px] flex gap-[12px] items-center">
+            <div className="w-10 h-10 border rounded-full"></div>
+            <div>
+              <p>{member.username}</p>
+              <p className="text-xs text-textSecondary">{member.email}</p>
+            </div>
+          </h2>
+          <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
+            {new Date(member.joined_at).toLocaleDateString()}
+          </h2>
+          <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
+            {/* Add DOB if available */}
+          </h2>
+          <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[117px]">
+            {member.role}
+          </h2>
+          <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
+            {/* Add phone number if available */}
+          </h2>
+          <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[100px]">
+            <p className="py-1 px-[6px] rounded-xl border w-fit text-xs font-medium">
+              Active
             </p>
-          </div>
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
-          Jan 1,2022
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
-          Jan 1,2022
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[117px]">
-          Full Time
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
-          9860123456
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[100px]">
-          <p className="py-1 px-[6px] rounded-xl border w-fit text-xs font-medium">
-            Active
-          </p>
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[full]">
-          <Dialog>
-            <DialogTrigger>
-              <img src={remove} className="w-10 h-10" />
-            </DialogTrigger>
-            <DeleteUser />
-          </Dialog>
-        </h2>
-      </div>
+          </h2>
+          <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[full]">
+            <Dialog>
+              <DialogTrigger>
+                <img src={remove} className="w-10 h-10" />
+              </DialogTrigger>
+              <DeleteUser />
+            </Dialog>
+          </h2>
+        </div>
+      ))}
     </div>
   );
 };
+
 export const InviteUserCard = () => {
   return (
     <DialogContent className="h-auto w-[459px]">
