@@ -5,6 +5,7 @@ import continueImage from "../images/resetPageImg/continueicon.png";
 import triangles from "../images/resetPageImg/triangles.png";
 import circles from "../images/resetPageImg/circles.png";
 import { Link } from "react-router-dom";
+import api from "@/api";
 
 export const PasswordReset = () => {
   const [email, setEmail] = useState("");
@@ -24,8 +25,8 @@ export const PasswordReset = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/auth/password-reset/",
+      const response = await api.post(
+        "/auth/password-reset/",
         { email },
       );
 
