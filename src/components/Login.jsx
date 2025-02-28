@@ -55,23 +55,26 @@ export const LoginPage = () => {
     try {
       const { credential } = credentialResponse;
   
-      // Send the credential to your backend
+      // Send the credential (Google token) to your backend for verification
       const response = await api.post("/google-login/", { access_token: credential });
- 
+  
+      // Assuming the backend sends back access and refresh tokens
+      const { access, refresh, email } = response.data;
+  
       // Store tokens in localStorage
-      localStorage.setItem("access_token", response.data.access);
-      localStorage.setItem("refresh_token", response.data.refresh);
-      localStorage.setItem("user_email", response.data.email);
-  toast.success("Logged In Successfully with Google");
-      navigate("/Onboarding-phase-one");
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
+      localStorage.setItem("user_email", email);
+  
       toast.success("Logged In Successfully with Google");
+      
+      // Navigate based on your app flow (you may have an onboarding flow here)
+      navigate("/Onboarding-phase-one");
     } catch (err) {
       console.error("Google login error:", err.response?.data || err);
       toast.error("Google login failed.");
     }
   };
-  
-  
   const handleGoogleLoginFailure = () => {
     setError("Google login failed.");
     toast.error("Google login failed.");
