@@ -51,30 +51,32 @@ export const LoginPage = () => {
     }
   };
   // Handle Google login
+  
   const handleGoogleLoginSuccess = async (credentialResponse) => {
+    setIsLoading(true);
     try {
       const { credential } = credentialResponse;
-  
-      // Send the credential (Google token) to your backend for verification
       const response = await api.post("/google-login/", { access_token: credential });
+      const { access, refresh, user } = response.data;
   
-      // Assuming the backend sends back access and refresh tokens
-      const { access, refresh, email } = response.data;
-  
-      // Store tokens in localStorage
+      // Store tokens and user data in localStorage
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
-      localStorage.setItem("user_email", email);
+      localStorage.setItem("user_email", user.email);
+      localStorage.setItem("username", user.username);
   
       toast.success("Logged In Successfully with Google");
-      
-      // Navigate based on your app flow (you may have an onboarding flow here)
       navigate("/Onboarding-phase-one");
     } catch (err) {
       console.error("Google login error:", err.response?.data || err);
-      toast.error("Google login failed.");
+      toast.error(err.response?.data?.error || "Google login failed.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+
+
   const handleGoogleLoginFailure = () => {
     setError("Google login failed.");
     toast.error("Google login failed.");
@@ -160,10 +162,11 @@ export const LoginPage = () => {
                   </button>
                   
                   <GoogleLogin
-                    onSuccess={handleGoogleLoginSuccess}
-                    onError={handleGoogleLoginFailure}
-                    useOneTap
-                  />
+  onSuccess={handleGoogleLoginSuccess}
+  onError={handleGoogleLoginFailure}
+  useOneTap
+  disabled={isLoading}
+/>
                   
                   <span className="text-[14px] text-textPrimary">
                     Don’t have an account?{" "}
