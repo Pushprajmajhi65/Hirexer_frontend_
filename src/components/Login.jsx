@@ -24,20 +24,20 @@ export const LoginPage = () => {
     };
   
     try {
-      const response = await api.post('/auth/login/', {
-        method: 'POST',
+      // Send POST request with loginData as the body
+      const response = await api.post('/auth/login/', loginData, {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(loginData),
       });
   
+      // Handle the response
       if (!response.ok) {
         throw new Error("Login failed");
       }
   
-      const data = await response.json();
-      
+      const data = await response.data; // Access the response data directly
+  
       // Store tokens in localStorage
       localStorage.setItem('access_token', data.access);
       localStorage.setItem('refresh_token', data.refresh);
