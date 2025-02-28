@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api"; // Import your api.js for handling requests
+import api from "../api"; // Import API configuration
 import toast from "react-hot-toast";
 import circles from "../images/Commonimg/circles.png";
 import letterSend from "../images/SignUpImages/letter_send.png";
@@ -12,54 +12,46 @@ export const SignUpPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Prevent double submission
   const navigate = useNavigate();
 
   // Function to check password strength
-  function passwordChecker(password) {
+  const passwordChecker = (password) => {
     let strength = 0;
     let missingCriteria = [];
 
-    if (password.length >= 8) {
-      strength++;
-    } else {
-      missingCriteria.push("at least 8 characters");
-    }
+    if (password.length >= 8) strength++;
+    else missingCriteria.push("at least 8 characters");
 
-    if (/[A-Z]/.test(password)) {
-      strength++;
-    } else {
-      missingCriteria.push("an uppercase letter");
-    }
+    if (/[A-Z]/.test(password)) strength++;
+    else missingCriteria.push("an uppercase letter");
 
-    if (/[0-9]/.test(password)) {
-      strength++;
-    } else {
-      missingCriteria.push("a number");
-    }
+    if (/[0-9]/.test(password)) strength++;
+    else missingCriteria.push("a number");
 
-    if (/[@$!%*?&]/.test(password)) {
-      strength++;
-    } else {
-      missingCriteria.push("a special character (@, $, !, %, *, ?, &)");
-    }
+    if (/[@$!%*?&]/.test(password)) strength++;
+    else missingCriteria.push("a special character (@, $, !, %, *, ?, &)");
 
     setPasswordStrength(strength);
-    return missingCriteria; // Return missing criteria
-  }
+    return missingCriteria;
+  };
 
   // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (isSubmitting) return; // Prevent double request
+    setIsSubmitting(true);
+
     // Check password requirements
     const missingCriteria = passwordChecker(password);
     if (missingCriteria.length > 0) {
-      toast.error(`Password is missing: ${missingCriteria.join(", ")}`);
+      toast.error(`Password must contain: ${missingCriteria.join(", ")}`);
+      setIsSubmitting(false);
       return;
     }
 
     try {
-      // Use the correct API call method
       const response = await api.post("/auth/register/", {
         username: userName,
         email,
@@ -68,20 +60,22 @@ export const SignUpPage = () => {
 
       toast.success("Registration Completed");
       setSuccess("Registration completed successfully!");
+      setError("");
       navigate("/onBoarding");
     } catch (err) {
-      console.error('Error during registration:', err.response ? err.response.data : err);
+      console.error("Error during registration:", err.response?.data || err);
 
       if (err.response) {
-        const errorMessage = err.response.data?.error || "Registration failed";
+        const errorMessage =
+          err.response.data?.error || err.response.data?.detail || "Registration failed";
         setError(errorMessage);
         toast.error(errorMessage);
       } else {
         setError("An unexpected error occurred");
         toast.error("An unexpected error occurred");
       }
-
-      setSuccess("");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -180,12 +174,12 @@ export const SignUpPage = () => {
                 />
                 <label htmlFor="terms" className="text-xs text-textPrimary">
                   I agree to the{" "}
-                  <a href="" className="text-greenColor">
-                    Terms & conditions
+                  <a href="#" className="text-greenColor">
+                    Terms & Conditions
                   </a>{" "}
                   and{" "}
-                  <a href="" className="text-greenColor">
-                    Privacy Policies
+                  <a href="#" className="text-greenColor">
+                    Privacy Policy
                   </a>
                   .
                 </label>
@@ -195,8 +189,9 @@ export const SignUpPage = () => {
                 <button
                   type="submit"
                   className="w-full h-[44px] bg-buttonBackground rounded-xl text-white font-bold text-base"
+                  disabled={isSubmitting}
                 >
-                  Create my account
+                  {isSubmitting ? "Registering..." : "Create my account"}
                 </button>
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 {success && <p className="text-sm text-green-500">{success}</p>}
