@@ -12,33 +12,32 @@ export const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
+  // Handle login with email and password
   const handleLogin = async (e) => {
     e.preventDefault();
-  
+
     const loginData = {
       email: email,
       password: password,
     };
-  
+
     try {
-      // Send POST request with loginData as the body
       const response = await api.post('/auth/login/', loginData, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-  
-      // Assuming the response includes tokens directly
-      const data = response.data;  // Access the response data directly
-  
+
+      const data = response.data;
+
       if (data.access && data.refresh) {
-        // Store tokens in localStorage
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
-  
+
         navigate("/overview");
         toast.success("Logged In Successfully");
       } else {
@@ -47,26 +46,25 @@ export const LoginPage = () => {
     } catch (err) {
       setError(err.message || "Login failed");
       toast.error("Wrong Password or Email");
-      setSuccess(""); // Clear any previous success messages
+      setSuccess("");
     }
   };
+
   // Handle Google login
-  
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     setIsLoading(true);
     try {
       const { credential } = credentialResponse;
-      const response = await api.post("/google-login/", { access_token: credential });
+      const response = await api.post("/auth/google-login/", { access_token: credential });
       const { access, refresh, user } = response.data;
-  
-      // Store tokens and user data in localStorage
+
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
       localStorage.setItem("user_email", user.email);
       localStorage.setItem("username", user.username);
-  
+
       toast.success("Logged In Successfully with Google");
-      navigate("/Onboarding-phase-one");
+      navigate("/overview");
     } catch (err) {
       console.error("Google login error:", err.response?.data || err);
       toast.error(err.response?.data?.error || "Google login failed.");
@@ -74,8 +72,6 @@ export const LoginPage = () => {
       setIsLoading(false);
     }
   };
-
-
 
   const handleGoogleLoginFailure = () => {
     setError("Google login failed.");
@@ -162,19 +158,18 @@ export const LoginPage = () => {
                   </button>
                   
                   <GoogleLogin
-  onSuccess={handleGoogleLoginSuccess}
-  onError={handleGoogleLoginFailure}
-  useOneTap
-  disabled={isLoading}
-/>
+                    onSuccess={handleGoogleLoginSuccess}
+                    onError={handleGoogleLoginFailure}
+                    useOneTap
+                    disabled={isLoading}
+                  />
                   
                   <span className="text-[14px] text-textPrimary">
                     Don’t have an account?{" "}
-                   
+                    <Link to="/Sign-up" className="text-greenColor">
+                      Sign up
+                    </Link>
                   </span>
-                  <Link to="/Sign-up" className="text-greenColor" style={{ buttonpadding: "10px" }}>
-                    Sign up
-                  </Link>
                 </div>
               </form>
             </div>
