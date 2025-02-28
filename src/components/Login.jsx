@@ -31,19 +31,19 @@ export const LoginPage = () => {
         },
       });
   
-      // Handle the response
-      if (!response.ok) {
-        throw new Error("Login failed");
+      // Assuming the response includes tokens directly
+      const data = response.data;  // Access the response data directly
+  
+      if (data.access && data.refresh) {
+        // Store tokens in localStorage
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+  
+        navigate("/overview");
+        toast.success("Logged In Successfully");
+      } else {
+        throw new Error("Missing tokens in response");
       }
-  
-      const data = await response.data; // Access the response data directly
-  
-      // Store tokens in localStorage
-      localStorage.setItem('access_token', data.access);
-      localStorage.setItem('refresh_token', data.refresh);
-  
-      navigate("/overview");
-      toast.success("Logged In Successfully");
     } catch (err) {
       setError(err.message || "Login failed");
       toast.error("Wrong Password or Email");
