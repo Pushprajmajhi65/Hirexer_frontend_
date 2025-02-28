@@ -10,18 +10,14 @@ import { useState } from "react";
 import navicon from "../images/Commonimg/navicon.png";
 import { MoreProfileOptions } from "./profile";
 
-
 export const UserOverviewUI = () => {
   const [showNavBar, setShowNavBar] = useState(false);
   const toggleNavBar = () => {
     setShowNavBar((prev) => !prev);
-
-
-    
   };
 
   return (
-    <div className="flex w-full h-full gap-8 bg-backgroundGray max-sm:px-0 px-[40px] pb-[80px] justify-center xl:justify-start xl:p-0">
+    <div className="flex w-ful h-full gap-8 bg-backgroundGray max-sm:px-0 px-[40px] pb-[80px] justify-center xl:justify-start xl:p-0">
       <NavBar />
       {showNavBar ? (
         <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
@@ -43,7 +39,7 @@ export const UserOverviewUI = () => {
           <h1 className="text-[30px] font-semibold text-textPrimary">
             Good Morning,
             <br />
-            Pushpraj 
+            Pushpraj
           </h1>
           <div className="md:ml-auto w-[214px] h-full p-4 flex flex-col items-center justify-center gap-2">
             <div className="flex items-center gap-8">
@@ -93,18 +89,18 @@ export const UserOverviewUI = () => {
             <h1 className="text-[32px] text-textPrimary font-medium">
               Invitations
             </h1>
-            <div className="w-full overflow-scroll rounded-md whitespace-nowrap no-scrollbar">
-              <div className="h-[44px] w-full min-w-[668px] xl:w-[668px]  flex items-center gap-3 bg-white rounded-t-2xl">
+            <div className="w-full overflow-auto">
+              <div className="h-[44px] w-full xl:w-[668px]  flex items-center gap-3 bg-white rounded-t-2xl">
                 <h2 className="w-[48px] text-center text-textSecondary text-[12px]">
                   SN
                 </h2>
                 <h2 className="w-[170px] text-textSecondary text-[12px]">
                   Work Space
                 </h2>
-                <h2 className="w-[168px] text-textSecondary text-[12px] ">
+                <h2 className="w-[168px] text-textSecondary text-[12px] max-sm:hidden">
                   Invite Date
                 </h2>
-                <h2 className="w-[271px] text-textSecondary text-[12px]">
+                <h2 className="w-[271px] text-textSecondary text-[12px] max-sm:hidden">
                   Message
                 </h2>
               </div>
@@ -113,18 +109,18 @@ export const UserOverviewUI = () => {
               <InvitationsCard />
             </div>
             <h1 className="text-[32px] text-textPrimary font-medium">Tasks</h1>
-            <div className="w-full overflow-scroll rounded-md whitespace-nowrap no-scrollbar">
-              <div className="h-[44px] w-full min-w-[668px] xl:w-[668px] flex items-center gap-3 bg-white rounded-t-2xl">
+            <div className="w-full overflow-auto">
+              <div className="h-[44px] w-full xl:w-[668px] flex items-center gap-3 bg-white rounded-t-2xl">
                 <h2 className="w-[48px] text-center text-textSecondary text-[12px]">
                   SN
                 </h2>
                 <h2 className="w-[170px] text-textSecondary text-[12px]">
                   Task Name
                 </h2>
-                <h2 className="w-[168px] text-textSecondary text-[12px]">
+                <h2 className="w-[168px] text-textSecondary text-[12px] max-sm:hidden">
                   Work Space
                 </h2>
-                <h2 className="w-[271px] text-textSecondary text-[12px]">
+                <h2 className="w-[271px] text-textSecondary text-[12px] max-sm:hidden">
                   Due Date
                 </h2>
               </div>
@@ -196,20 +192,12 @@ export const NavBar = () => {
           <img src={meeting} className="w-5 h-5" />
           Meetings
         </Link>
-
         <Link
           to="/employee"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
         >
           <img src={meeting} className="w-5 h-5" />
           Employees
-        </Link>
-        <Link
-          to="/profile"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
-        >
-          <img src={meeting} className="w-5 h-5" />
-          Profile
         </Link>
       </div>
     </div>
@@ -337,7 +325,7 @@ const MeetingSceduleCard = () => {
 
 const InvitationsCard = () => {
   return (
-    <div className=" w-full min-w-[668px] xl:w-[668px] h-[56px] bg-backgroundGray2 flex">
+    <div className=" w-full xl:w-[668px] h-[56px] bg-backgroundGray2 flex">
       <div className="flex items-center justify-center w-[48px] h-[56px] max-sm:p-6">
         1
       </div>
@@ -348,10 +336,10 @@ const InvitationsCard = () => {
         </h2>
       </div>
       <div className="flex flex-col justify-center w-[168px] h-[56px] py-2 px-4">
-        <h1 className="w-fit ">Jan 1, 2022</h1>
+        <h1 className="w-fit max-sm:hidden">Jan 1, 2022</h1>
       </div>
       <div className="flex flex-col justify-center w-[168px] h-[56px] py-2 px-4">
-        <h1 className="w-full ">No Message</h1>
+        <h1 className="w-full max-sm:hidden">No Message</h1>
       </div>
     </div>
   );

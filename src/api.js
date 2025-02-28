@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000", // Replace with your Django server URL
+  // baseURL: "http://127.0.0.1:8000", // Replace with your Django server URL
+  baseURL: "https://territorial-georgine-pushprajmajhi-eb39e434.koyeb.app/",
   headers: {
     'Content-Type': 'application/json',
   },

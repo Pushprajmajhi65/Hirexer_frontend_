@@ -93,12 +93,10 @@ export const OnBoardingTwo = () => {
 
       setSuccess("Workspace created successfully!");
       setError("");
-      toast.success("Workspace created successfully!");
     } catch (err) {
       setError(err.response?.data?.error || "Workspace creation failed");
       setSuccess("");
       navigate("/Onboarding-phase-two");
-    
     }
   };
 
@@ -107,7 +105,11 @@ export const OnBoardingTwo = () => {
       <div className="w-full max-w-[552px] lg:max-w-[552px] h-auto flex flex-col items-center justify-center">
         <div className="flex flex-col w-full h-auto px-4 py-6 bg-white shadow-lg rounded-2xl md:px-8 lg:px-10 md:py-8 lg:py-10">
           <div className="flex flex-col items-center w-full">
-           
+            <img
+              // src={mailCard}
+              className="w-20 sm:w-24 md:w-28 lg:w-32"
+              alt="https://www.google.com/imgres?q=icon&imgurl=https%3A%2F%2Fpng.pngtree.com%2Felement_our%2F20190530%2Fourmid%2Fpngtree-correct-icon-image_1267804.jpg&imgrefurl=https%3A%2F%2Fpngtree.com%2Fso%2Ficon&docid=PHhCM75cI9fiwM&tbnid=6DcwHBK5gb1KLM&vet=12ahUKEwje2YbGi62KAxVuTWcHHYiNPOcQM3oECGQQAA..i&w=360&h=360&hcb=2&ved=2ahUKEwje2YbGi62KAxVuTWcHHYiNPOcQM3oECGQQAA"
+            />
             <h1 className="text-center text-[20px] sm:text-[22px] md:text-[24px] lg:text-[26px] font-semibold mt-4">
               Let's Start with your
               <br /> Onboarding
@@ -268,7 +270,8 @@ export const OnBoardingThree = () => {
   return (
     <div className="relative flex items-center justify-center w-screen h-screen font-poppins">
       <div className="w-[90%] max-w-[780px] h-auto md:h-[640px] bg-white flex flex-col rounded-2xl items-center justify-top relative px-6 sm:px-8 md:px-12 py-8 sm:py-12 md:py-16 gap-[24px] md:gap-[32px]">
-        <img src={mailCard} 
+        <img 
+        // src={mailCard} 
         className="w-[96px] sm:w-[120px] md:w-[144px]" />
         <h1 className="text-[24px] sm:text-[28px] md:text-[36px] font-bold text-headerGray text-center">
           Invite members to workspace
