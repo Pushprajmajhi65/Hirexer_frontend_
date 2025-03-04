@@ -126,21 +126,37 @@ const MyProfileCard = () => {
   );
 };
 
+
+
+
+
+
+
+import { Link } from "react-router-dom"; // For navigation
+
+
+
 export const MoreProfileOptions = () => {
   const [workspaces, setWorkspaces] = useState([]);
-  const { activeWorkspace, setActiveWorkspace } = useWorkspace(); // Access workspace context
+  const { activeWorkspace, setActiveWorkspace, setWorkspaceMembers } = useWorkspace(); 
   const accessToken = localStorage.getItem("access_token");
+
   useEffect(() => {
-    // Fetch available workspaces
     const fetchWorkspaces = async () => {
       try {
-        const accessToken = localStorage.getItem("access_token"); // Get JWT token from localStorage
         const response = await api.get("/api/workspaces/", {
           headers: {
-            Authorization: `Bearer ${accessToken}`, // Include JWT token in the request
+            Authorization: `Bearer ${accessToken}`,
           },
         });
         setWorkspaces(response.data);
+
+        const savedWorkspace = localStorage.getItem("activeWorkspace");
+        if (savedWorkspace) {
+          const parsedWorkspace = JSON.parse(savedWorkspace);
+          setActiveWorkspace(parsedWorkspace);
+          fetchWorkspaceMembers(parsedWorkspace.id);
+        }
       } catch (error) {
         console.error("Error fetching workspaces", error);
         toast.error("Failed to fetch workspaces");
@@ -148,34 +164,40 @@ export const MoreProfileOptions = () => {
     };
 
     fetchWorkspaces();
-  }, []);
-  const handleWorkspaceSwitch = async (workspaceId) => {
+  }, [accessToken, setActiveWorkspace]);
+
+  const fetchWorkspaceMembers = async (workspaceId) => {
     try {
-      const accessToken = localStorage.getItem("access_token"); // Get JWT token from localStorage
-      const response = await api.post(
-        "/workspace/set-active/",
-        { workspace_id: workspaceId },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`, // Include JWT token in the request
-          },
-        }
-      );
-  
-      // Check if the response contains workspace data
-      if (response.data && response.data.id) {
-        // Update the active workspace in the context
-        setActiveWorkspace(response.data);
-  
-        // Show success message
-        toast.success("Workspace switched successfully");
-      } else {
-        toast.error("Failed to switch workspace");
-      }
+      const response = await api.get(`/api/workspaces/${workspaceId}/members/`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      setWorkspaceMembers(response.data); 
     } catch (error) {
-      console.error("Error switching workspace:", error);
-      toast.error("Failed to switch workspace");
+      console.error("Error fetching workspace members:", error);
+      toast.error("Failed to fetch workspace members");
     }
+  };
+
+  const handleWorkspaceSwitch = (workspaceId) => {
+    const selectedWorkspace = workspaces.find((ws) => ws.id === workspaceId);
+    if (selectedWorkspace) {
+      setActiveWorkspace(selectedWorkspace);
+      localStorage.setItem("activeWorkspace", JSON.stringify(selectedWorkspace));
+      fetchWorkspaceMembers(selectedWorkspace.id);
+      toast.success(`Switched to workspace: ${selectedWorkspace.name}`);
+    } else {
+      toast.error("Workspace not found");
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("activeWorkspace");
+    toast.success("You have been logged out");
+    navigate("/");
   };
 
   return (
@@ -189,14 +211,15 @@ export const MoreProfileOptions = () => {
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[297px] h-[209px] py-4 px-6 flex flex-col items-center justify-center gap-2">
+      <PopoverContent className="w-[297px] py-4 px-6 flex flex-col items-center gap-2 max-h-[80vh] overflow-auto">
         <div className="flex flex-col items-center">
           <div className="h-[50px] w-[50px] rounded-full border border-black"></div>
           <h1 className="text-xs text-textSecondary">Workspace Name</h1>
         </div>
         <div className="flex flex-col w-full gap-2">
+          {/* Workspace Dropdown */}
           <select
-            onChange={(e) => handleWorkspaceSwitch(e.target.value)}
+            onChange={(e) => handleWorkspaceSwitch(Number(e.target.value))}
             value={activeWorkspace?.id || ""}
             className="border rounded-xl h-[40px] w-full"
           >
@@ -207,18 +230,45 @@ export const MoreProfileOptions = () => {
               <option key={workspace.id} value={workspace.id}>
                 {workspace.name}
               </option>
-              
             ))}
           </select>
+
+          {/* Add New Workspace Button */}
+          <Link to="/Onboarding-phase-one">
+            <button className="w-full h-[40px] bg-backgroundGreen text-white rounded-xl flex items-center justify-center gap-2">
+              <span>Add New Workspace</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </Link>
+
+          {/* My Profile Button */}
           <button className="border rounded-xl bg-backgroundGreen text-white h-[40px] w-full">
             My Profile
           </button>
+
+          {/* Active Workspace Display */}
           <h1 className="text-center text-[18px] mt-2">
-  {activeWorkspace && activeWorkspace.name 
-    ? `Active Workspace: ${activeWorkspace.name}` 
-    : "No Workspace Selected"}
-</h1>
-          <button className="border rounded-xl border-colorRed text-colorRed h-[40px] w-full">
+            {activeWorkspace && activeWorkspace.name
+              ? `Active Workspace: ${activeWorkspace.name}`
+              : "No Workspace Selected"}
+          </h1>
+
+          {/* Logout Button */}
+          <button
+            onClick={logout}
+            className="border rounded-xl border-colorRed text-colorRed h-[40px] w-full"
+          >
             Logout
           </button>
         </div>

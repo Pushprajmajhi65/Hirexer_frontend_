@@ -6,6 +6,7 @@ import group from "../images/onBoarding/groupimg.png";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "@/api";
 
 export const OnBoardingOne = () => {
   return (

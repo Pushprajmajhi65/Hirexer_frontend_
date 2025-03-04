@@ -1,4 +1,4 @@
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { SignUpPage } from "./components/SignUp";
 import { LoginPage } from "./components/Login";
 import { PasswordReset } from "./components/passwordReset";
@@ -18,23 +18,18 @@ import { MyProfile } from "./components/profile";
 import { LiveVideo } from "./components/liveVideo";
 import AgoraRTC, { AgoraRTCProvider, useRTCClient } from "agora-rtc-react";
 import { WorkspaceProvider } from "./components/WorkspaceContext"; // Import the WorkspaceProvider
+import { Applications } from "./components/application";
+
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation(); // Use useLocation to access location.state
   const agoraClient = useRTCClient(
-    AgoraRTC.createClient({ codec: "vp8", mode: "rtc" }),
+    AgoraRTC.createClient({ codec: "vp8", mode: "rtc" })
   );
 
-  const handleConnect = (channelName) => {
-    if (channelName) {
-      navigate(`/via/${channelName}`);
-    } else {
-      console.error("Invalid channel name");
-    }
-  };
-
   return (
-    <WorkspaceProvider> {/* Wrap the entire app with WorkspaceProvider */}
+    <WorkspaceProvider>
       <Routes>
         {/* Main routes */}
         <Route path="/" element={<LoginPage />} />
@@ -50,26 +45,28 @@ function App() {
         <Route path="/feed" element={<FeedUI />} />
         <Route path="/employee" element={<Employee />} />
         <Route path="/profile" element={<MyProfile />} />
+        
+        <Route path="/application" element={<Applications />} />
+    
 
         {/* Agora RTC-related routes */}
         <Route
           path="/meeting"
-          element={<MeetingUI connectToVideo={handleConnect} />}
+          element={<MeetingUI />} // Assuming you want to keep MeetingUI here
         />
         <Route
           path="/via/:channelName"
           element={
             <AgoraRTCProvider client={agoraClient}>
-              <LiveVideo />
+              {/* Pass location.state values to LiveVideo */}
+              <LiveVideo
+                channelName={location.state?.channelName}
+                token={location.state?.token}
+                participants={location.state?.participants}
+              />
             </AgoraRTCProvider>
           }
         />
-
-        {/* Connect form route */}
-        {/* <Route
-          path="/connect"
-          element={<ConnectForm connectToVideo={handleConnect} />}
-        /> */}
       </Routes>
     </WorkspaceProvider>
   );

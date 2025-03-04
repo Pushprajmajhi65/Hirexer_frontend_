@@ -1,158 +1,130 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-
-import {
-  LocalUser,
-  RemoteUser,
+import React, { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom"; // For React Router v6
+import AgoraRTC, {
+  AgoraRTCProvider,
+  useRTCClient,
+  useConnectionState,
   useJoin,
-  useLocalCameraTrack,
-  useLocalMicrophoneTrack,
-  usePublish,
-  useRemoteAudioTracks,
   useRemoteUsers,
+  RemoteUser,
 } from "agora-rtc-react";
 
 export const LiveVideo = () => {
-  const appId = "ceb1bedabb974f439c26722f9f6d2b97";
-  const { channelName } = useParams(); // Pull the channel name from the param
+  const [searchParams] = useSearchParams(); // Extract query parameters
+  const channelName = searchParams.get("channelName");
+  const token = searchParams.get("token");
+  const participants = JSON.parse(searchParams.get("participants") || []);
 
-  const [token, setToken] = useState("");
-  const [loading, setLoading] = useState(true); // For loading state
-  const [showMembers, setShowMembers] = useState(false); // To toggle member count display
+  const [micOn, setMicOn] = useState(true);
+  const [cameraOn, setCameraOn] = useState(true);
+  const [localTracks, setLocalTracks] = useState({ audioTrack: null, videoTrack: null });
+  const videoRef = useRef(null);
 
-  const getAccessToken = async (channelName) => {
-    const baseURL = "http://localhost:8081/access_token"; // Backend URL
-
-    const queryParams = new URLSearchParams({
-      channelName,
-    });
-
-    try {
-      const response = await fetch(`${baseURL}?${queryParams}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} - ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setToken(data.token); // Set the token in state
-      setLoading(false); // Stop loading once token is fetched
-    } catch (error) {
-      console.error("Failed to fetch access token:", error);
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (channelName) {
-      getAccessToken(channelName); // Fetch the token when the component mounts
-    }
-  }, [channelName]);
-
-  const [activeConnection, setActiveConnection] = useState(true);
-  const [micOn, setMic] = useState(true);
-  const [cameraOn, setCamera] = useState(true);
-
-  const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
-  const { localCameraTrack } = useLocalCameraTrack(cameraOn);
-
-  const navigate = useNavigate();
-
-  useJoin(
-    {
-      appid: appId,
-      channel: channelName,
-      token,
-    },
-    activeConnection && !loading, // Join the channel only when token is ready
+  // Initialize Agora Client
+  const agoraClient = useRTCClient(
+    AgoraRTC.createClient({ codec: "vp8", mode: "rtc" })
   );
 
-  usePublish([localMicrophoneTrack, localCameraTrack]);
-
+  const connectionState = useConnectionState(agoraClient);
   const remoteUsers = useRemoteUsers();
-  const { audioTracks } = useRemoteAudioTracks(remoteUsers);
 
-  audioTracks.forEach((track) => track.play());
+  // Join the channel
+  useJoin({
+    client: agoraClient,
+    appid: "50f8fd81c911474e9707a7ea5118a7ca", // Replace with your Agora App ID
+    channel: channelName, // Ensure this is a valid string
+    token: token || null, // Optional: If you need a token
+  });
 
-  const userCount = remoteUsers.length;
-  console.log(userCount);
+  // Setup local tracks (Microphone + Camera)
+  useEffect(() => {
+    const setupLocalTracks = async () => {
+      try {
+        const [microphoneTrack, cameraTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        setLocalTracks({ audioTrack: microphoneTrack, videoTrack: cameraTrack });
 
-  // Limit the number of visible remote video screens to 6
-  const displayedUsers = remoteUsers.slice(0, 5);
+        // Publish to Agora
+        await agoraClient.publish([microphoneTrack, cameraTrack]);
+
+        // Attach video track to the video element
+        if (videoRef.current) {
+          cameraTrack.play(videoRef.current);
+        }
+      } catch (error) {
+        console.error("Error setting up local tracks:", error);
+      }
+    };
+
+    setupLocalTracks();
+
+    return () => {
+      localTracks.audioTrack?.stop();
+      localTracks.videoTrack?.stop();
+      localTracks.audioTrack?.close();
+      localTracks.videoTrack?.close();
+    };
+  }, []);
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 w-full">
-      {loading ? (
-        <p className="text-xl text-gray-500">Loading...</p> // Display loading state
-      ) : (
+    <AgoraRTCProvider client={agoraClient}>
+      <div className="flex flex-col items-center min-h-screen bg-gray-100 p-4 w-full">
         <div className="w-full flex flex-col items-center">
-          {/* Video Grid - Only display up to 6 users */}
+          {/* Video Grid - Display remote and local users */}
           <div className="flex w-[1464px] gap-5 flex-wrap items-center justify-center p-4">
-            {displayedUsers.map((user) => (
-              <div key={user.uid} className="relative w-[430px] h-[242px]">
-                <RemoteUser user={user} className="rounded-xl bg-black " />
+            {/* Remote Users */}
+            {remoteUsers.map((user) => (
+              <div key={user.uid} className="relative w-[430px] h-[242px] bg-black rounded-xl">
+                <RemoteUser user={user} className="w-full h-full" />
               </div>
             ))}
-            <div className="relative max-w-md rounded-lg shadow-lg w-[430px] h-[242px]">
-              <LocalUser
-                audioTrack={localMicrophoneTrack}
-                videoTrack={localCameraTrack}
-                cameraOn={cameraOn}
-                micOn={micOn}
-                playAudio={false} // Prevent playing local audio
-                playVideo={cameraOn}
-                className="rounded-xl"
-              />
-            </div>
+
+            {/* Local User */}
+            {localTracks.videoTrack && (
+              <div className="relative max-w-md rounded-lg shadow-lg w-[430px] h-[242px] bg-black">
+                <video ref={videoRef} className="w-full h-full rounded-xl" autoPlay playsInline />
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Buttons positioned at the bottom */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg flex space-x-4">
-        <button
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onClick={() => setMic((prev) => !prev)}
-        >
-          Mic {micOn ? "On" : "Off"}
-        </button>
-        <button
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onClick={() => setCamera((prev) => !prev)}
-        >
-          Camera {cameraOn ? "On" : "Off"}
-        </button>
-        <button
-          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 relative"
-          onClick={() => setShowMembers((prev) => !prev)} // Toggle visibility
-        >
-          Members
-          <div className="absolute top-0 right-0 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-            {userCount}
-          </div>
-        </button>
+        {/* Controls */}
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-lg shadow-lg flex space-x-4">
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            onClick={() => {
+              if (localTracks.audioTrack) {
+                micOn ? localTracks.audioTrack.setEnabled(false) : localTracks.audioTrack.setEnabled(true);
+                setMicOn(!micOn);
+              }
+            }}
+          >
+            {micOn ? "Mute Mic" : "Unmute Mic"}
+          </button>
 
-        {/* {showMembers && userCount > 6 && (
-          <div className="bg-red-500 text-white rounded-full px-3 py-1 text-sm absolute top-16 left-1/2 transform -translate-x-1/2">
-            {userCount} Users
-          </div>
-        )} */}
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            onClick={() => {
+              if (localTracks.videoTrack) {
+                cameraOn ? localTracks.videoTrack.setEnabled(false) : localTracks.videoTrack.setEnabled(true);
+                setCameraOn(!cameraOn);
+              }
+            }}
+          >
+            {cameraOn ? "Turn Off Camera" : "Turn On Camera"}
+          </button>
 
-        <button
-          className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-          onClick={() => {
-            setActiveConnection(false);
-            navigate("/meeting");
-          }}
-        >
-          Disconnect
-        </button>
+          <button className="px-4 py-2 bg-green-500 text-white rounded-md">
+            Members ({participants.length})
+          </button>
+
+          <button
+            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            onClick={() => agoraClient.leave()}
+          >
+            Disconnect
+          </button>
+        </div>
       </div>
-    </div>
+    </AgoraRTCProvider>
   );
 };

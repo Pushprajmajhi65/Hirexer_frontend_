@@ -1,238 +1,417 @@
-import notifaction from "../images/mainScreen/notifaction.png";
-import settting from "../images/mainScreen/settings.png";
-import orangeMeeting from "../images/Commonimg/meeting_orange.png";
+import React, { useEffect, useState } from "react";
+import api from "@/api";
+import { toast } from "react-hot-toast";
+import { NavBar, SmallScreenNavBar } from "./UserOverview";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { MoreProfileOptions } from "./profile";
+import navicon from "../images/Commonimg/navicon.png";
 import dateIcon from "../images/Commonimg/PastMeetings.png";
 import options from "../images/Commonimg/options.png";
-import { NavBar, SmallScreenNavBar } from "./UserOverview";
-import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
-import navicon from "../images/Commonimg/navicon.png";
-import { MoreProfileOptions } from "./profile";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import orangeMeeting from "../images/Commonimg/meeting_orange.png";
 
 export const MeetingUI = ({ connectToVideo }) => {
-  const [date, setDate] = useState(new Date());
+  const [meetings, setMeetings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showNavBar, setShowNavBar] = useState(false);
-  const toggleNavBar = () => {
-    setShowNavBar((prev) => !prev);
-  };
+  const [activeTab, setActiveTab] = useState("upcoming");
+
+  const toggleNavBar = () => setShowNavBar((prev) => !prev);
+
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        const response = await api.get("/user-meetings/");
+        setMeetings(response.data);
+      } catch (err) {
+        setError("Failed to fetch meetings");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMeetings();
+  }, []);
+
+  const filteredMeetings = meetings.filter((meeting) => {
+    const now = new Date();
+    const startTime = new Date(meeting.start_time);
+    const endTime = new Date(meeting.end_time);
+
+    switch (activeTab) {
+      case "upcoming":
+        return startTime > now;
+      case "past":
+        return endTime < now;
+      case "archived":
+        return meeting.isArchived;
+      default:
+        return true;
+    }
+  });
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
-    <div className="flex w-full h-full gap-8 bg-backgroundGray px-[40px] pb-[80px] xl:p-0">
+    <div className="flex w-full h-full bg-backgroundGray">
+      {/* Sidebar */}
       <NavBar />
-      {showNavBar ? (
+      {showNavBar && (
         <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
           <SmallScreenNavBar />
         </div>
-      ) : null}
-      <div className="flex flex-col xl:items-baseline w-full xl:w-[1100px] h-[100%] gap-6">
-        <div className="w-full h-[92px] flex items-center justify-end gap-[10px]">
-          <button className="mr-auto xl:hidden" onClick={toggleNavBar}>
+      )}
+
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 p-4 md:p-6 overflow-y-auto">
+        {/* Header with Navbar Toggle and Buttons */}
+        <div className="flex justify-between items-center mb-4">
+          <button className="xl:hidden" onClick={toggleNavBar}>
             <img src={navicon} className="w-6 h-6" />
           </button>
-          <div className="flex items-center gap-2 p-3">
-            <MoreProfileOptions />
-            <img src={notifaction} className="w-5 h-5" />
-            <img src={settting} className="w-5 h-5" />
+          <h1 className="text-2xl font-bold">Meetups</h1>
+          <MoreProfileOptions />
+        </div>
+
+        {/* Buttons for Create and Join Meetup */}
+        <div className="flex flex-wrap md:flex-nowrap justify-between items-center mb-4 gap-2">
+          <div className="ml-auto">
+            <Dialog>
+              <DialogTrigger>
+                <button className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg shadow-md w-full md:w-auto">
+                  Create new meeting
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <CreateMeetingForm connectToVideo={connectToVideo} />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-        <div className="flex flex-wrap gap-8">
-          <div className="flex flex-col gap-6">
-            <h1 className="text-[32px] text-textPrimary font-medium">
-              Meetings
-            </h1>
-            <div className="grid grid-cols-2 gap-6 max-lg:flex max-lg:flex-wrap max-md:w-full w-[660px]">
-              <MeetingButton connectToVideo={connectToVideo} />
-              <MeetingButton />
-              <MeetingButton />
-              <MeetingButton />
-            </div>
-          </div>
-          <div className="flex flex-col gap-6">
-            <h1 className="text-[32px] text-textPrimary font-medium">
-              Calendar
-            </h1>
-            <Calendar
-              mode="range"
-              selected={date}
-              onSelect={setDate}
-              className="border rounded-xl border-borderGray  max-sm:w-auto w-[332px] h-[340px] bg-white grid place-content-center font-[Poppins] p-4 gap-6"
+
+        {/* Tabs */}
+        <div className="flex space-x-4 mb-4 overflow-x-auto">
+          {["upcoming", "past", "archived"].map((tab) => (
+            <button
+              key={tab}
+              className={`text-muted-foreground border-b-2 whitespace-nowrap px-4 py-2 ${
+                activeTab === tab ? "border-[#1ED0C2]" : "border-transparent"
+              } hover:border-[#1ED0C2]`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Meetup Cards */}
+        <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)]">
+          {activeTab === "upcoming" && (
+            <UpcomingMeetups
+              meetings={filteredMeetings}
+              connectToVideo={connectToVideo}
+              deleteMeeting={deleteMeeting}
             />
-          </div>
-        </div>
-        <div className="flex flex-col h-[314px] w-full py-8 gap-[24px]">
-          <h1 className="text-[24px] font-medium">Upcoming Meetings</h1>
-          <div className="overflow-scroll rounded-md whitespace-nowrap no-scrollbar">
-            <div className="flex gap-6">
-              <UpcomingMettingCard />
-              <UpcomingMettingCard />
-              <UpcomingMettingCard />
-              <UpcomingMettingCard />
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-6">
-          <h1 className="text-[24px] font-medium">Past Meetings</h1>
-          <div className="flex flex-wrap w-full gap-8">
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-            <PastMeetings />
-          </div>
+          )}
+          {activeTab === "past" && <PastMeetups meetings={filteredMeetings} />}
+          {activeTab === "archived" && <ArchivedMeetups meetings={filteredMeetings} />}
         </div>
       </div>
     </div>
   );
 };
 
-const MeetingButton = ({ connectToVideo }) => {
+const CreateMeetingForm = ({ connectToVideo }) => {
   const [meetingName, setMeetingName] = useState("");
-  const [invalidInputMsg, setInvalidInputMsg] = useState("");
+  const [members, setMembers] = useState([]);
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16)); // Set default to current date and time
+  const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  console.log(meetingName);
-  const handleConnect = (e) => {
-    // trim spaces
-    const trimmedChannelName = meetingName.trim();
+  // Handle adding new member
+  const handleAddMember = (email) => {
+    if (email.trim()) {
+      setMembers([...members, { id: Date.now(), email }]);
+    }
+  };
 
-    // validate input: make sure channelName is not empty
-    if (trimmedChannelName === "") {
-      e.preventDefault(); // keep the page from reloading on form submission
-      setInvalidInputMsg("Channel name can't be empty."); // show warning
-      setMeetingName(""); // resets channel name value in case user entered blank spaces
+  // Handle creating a new meeting
+  const handleCreateMeeting = async () => {
+    if (!meetingName.trim()) {
+      toast.error("Meetup name can't be empty.");
+      return;
+    }
+    if (!startDate || !endDate) {
+      toast.error("Start and End times are required.");
       return;
     }
 
-    connectToVideo(trimmedChannelName);
+    // Ensure start date is greater than current date
+    const currentTime = new Date();
+    const startTime = new Date(startDate);
+    if (startTime <= currentTime) {
+      toast.error("Start date must be in the future.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.post("/create/", {
+        title: meetingName,
+        start_time: startTime.toISOString(),
+        end_time: new Date(endDate).toISOString(),
+        invited_members: members.map((member) => member.email),
+      });
+
+      console.log("API response:", response); // Log the response to verify its structure
+
+      if (response.status === 200 || response.status === 201) {
+        // Show the success message from the backend
+        toast.success(response.data.message);
+        connectToVideo(response.data.agora_channel_name);
+      } else {
+        toast.error("Unexpected response from the server.");
+      }
+    } catch (err) {
+      toast.error("Error creating meeting.");
+    } finally {
+      setLoading(false);
+    }
   };
-  const MembersCard = () => {
-    return (
-      <div className="flex flex-col w-full gap-6">
-        <div className="w-full h-[51px] bg-white rounded-xl flex items-center p-[16px] gap-[14px] border">
-          <div className="flex gap-[14px] items-center">
-            <div className=" w-[25px] h-[25px] border rounded-full"></div>
-            <div className="gap-2">
-              <h1 className="text-[12px] font-bold text-textDarkBlue">
-                Jim Hopper
-              </h1>
-              <p className="text-xs text-textDarkBlue">Workspace, others</p>
-            </div>
-          </div>
+
+  return (
+    <div className="flex flex-col gap-6">
+      <h1 className="font-medium text-[24px]">Create a Meetup</h1>
+      <div className="flex flex-col gap-4">
+        {/* Meetup Name Input */}
+        <input
+          type="text"
+          placeholder="Enter meetup name"
+          value={meetingName}
+          onChange={(e) => setMeetingName(e.target.value)}
+          className="w-full p-2 border rounded-lg"
+        />
+
+        {/* Start Date Input */}
+        <input
+          type="datetime-local"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="w-full p-2 border rounded-lg"
+        />
+
+        {/* End Date Input */}
+        <input
+          type="datetime-local"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="w-full p-2 border rounded-lg"
+        />
+
+        {/* Dynamic Member Email Fields */}
+        <input
+          type="text"
+          placeholder="Enter member email"
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
+              handleAddMember(e.target.value);
+              e.target.value = "";
+            }
+          }}
+          className="w-full p-2 border rounded-lg"
+        />
+
+        {/* Displaying added members */}
+        <div className="flex flex-col gap-2">
+          {members.map((member) => (
+            <MembersCard key={member.id} member={member} removeMember={() => handleRemoveMember(member.id)} />
+          ))}
         </div>
       </div>
-    );
+
+      {/* Create Meetup Button */}
+      <button
+        className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg"
+        onClick={handleCreateMeeting}
+        disabled={loading}
+      >
+        {loading ? "Creating..." : "Create Meetup"}
+      </button>
+    </div>
+  );
+};
+
+// Handle removing a member
+const handleRemoveMember = (memberId) => {
+  setMembers(members.filter(member => member.id !== memberId));
+};
+
+const deleteMeeting = async (meetingId) => {
+  try {
+    const response = await api.delete(`/delete/${meetingId}/`);
+    if (response.status === 200 || response.status === 204) {
+      toast.success("Meeting deleted successfully.");
+      return { success: true };
+    } else {
+      throw new Error("Failed to delete the meeting");
+    }
+  } catch (error) {
+    console.error("Error deleting meeting:", error);
+    toast.error("Error deleting meeting.");
+    return { success: false };
+  }
+};
+
+const UpcomingMeetups = ({ meetings, connectToVideo, deleteMeeting }) => {
+  const [meetingsList, setMeetingsList] = useState(meetings);
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [meetingToDelete, setMeetingToDelete] = useState(null);
+
+  const handleJoinMeeting = (meeting) => {
+    const url = `/live-video?channelName=${meeting.agora_channel_name}&token=${meeting.token}&participants=${JSON.stringify(meeting.participants)}`;
+    window.open(url, "_blank");
   };
+
+  const handleDeleteMeeting = (meetingId) => {
+    setMeetingToDelete(meetingId);
+    setShowConfirmPopup(true);
+  };
+
+  const confirmDelete = () => {
+    deleteMeeting(meetingToDelete).then((response) => {
+      if (response.success) {
+        // Remove the deleted meeting from the list
+        setMeetingsList(meetingsList.filter((meeting) => meeting.id !== meetingToDelete));
+        setShowConfirmPopup(false);  // Close the confirmation popup
+      }
+    });
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmPopup(false);
+  };
+
+  const sortedMeetings = meetingsList.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+
   return (
-    <Dialog>
-      <DialogTrigger className="w-[318px] h-[158px] max-md:w-full bg-white rounded-xl py-4 px-6 flex flex-col gap-6 border border-borderGray2">
-        <div className="flex flex-col gap-6">
-          <img src={orangeMeeting} className="w-[46px] h-[42px]" />
-          <h2 className="font-medium text-textPrimary">New Meeting</h2>
-        </div>
-      </DialogTrigger>
-      <DialogContent className="h-auto w-[486px]">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col items-center">
-            <h1 className="font-medium text-[24px] w-full">Create a Meeting</h1>
-            <div className="w-full text-[18px] font-medium text-textGary">
-              <h2>
-                Meeting Name:{" "}
-                <input
-                  onChange={(e) => {
-                    setMeetingName(e.target.value);
-                  }}
-                />
-              </h2>
-              <h2>Meeting Time</h2>
-              <h2>Meeting Type</h2>
+    <div className="space-y-4">
+      {sortedMeetings.map((meeting) => (
+        <div key={meeting.id} className="flex justify-between items-center p-4 bg-[#FFFFFF] rounded-xl shadow-md">
+          <div>
+            <div className="flex items-center">
+              <img src={orangeMeeting} className="w-[46px] h-[42px]" />
+              <span className="font-semibold ml-2">{meeting.title}</span>
             </div>
+            <span className="text-muted-foreground">
+              {new Date(meeting.start_time).toLocaleString("en-US", {
+                weekday: "short",
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </span>
           </div>
-          <div className="flex flex-col gap-[12px]">
-            <h1>Members</h1>
-            <div className="flex flex-col gap-2">
-              <input
-                className="w-full border h-[44px] rounded-xl p-2 font-normal text-[16px]"
-                placeholder="hirexer@gmail.com"
-              />
-              <div className="flex flex-col gap-2">
-                <MembersCard />
-                <MembersCard />
-                <MembersCard />
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-center gap-4">
-            <button className="border w-[170px] h-[44px] rounded-xl bg-white text-textBlack">
-              Cancel
+          <div className="flex justify-center space-x-2">
+            <button
+              className="bg-[#1ED0C2] text-white w-[120px] h-[48px] rounded-lg"
+              onClick={() => handleJoinMeeting(meeting)}
+            >
+              Join
             </button>
             <button
-              className="border w-[170px] h-[44px] rounded-xl bg-buttonGreen text-white"
-              onClick={() => {
-                handleConnect();
-              }}
+              className="bg-[#FF4D4D] text-white w-[120px] h-[48px] rounded-lg"
+              onClick={() => handleDeleteMeeting(meeting.id)}
             >
-              Send Invites
+              Delete
             </button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+      ))}
 
-const UpcomingMettingCard = () => {
-  return (
-    <div className="flex flex-col w-[273px] h-[190px] bg-white rounded-xl border border-borderGray2 p-6 gap-6">
-      <div>
-        <div className="flex flex-col text-[12px] text-textPrimary gap-2">
-          <h2>Meeting Name</h2>
-          <h2>Nov 10, 11:30am - 01:20pm</h2>
-          <div className="flex gap-3">
-            <div className="px-2 py-1 border border-colorRed rounded-2xl text-colorRed">
-              Meeting
-            </div>
-            <div className="px-2 py-1 border border-colorRed rounded-2xl text-colorRed">
-              Desgin
+      {showConfirmPopup && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-xl shadow-md w-80">
+            <h3 className="text-lg font-semibold">Are you sure you want to delete this meeting?</h3>
+            <p className="mt-2 text-sm text-gray-500">
+              You won't be able to recover this meeting once deleted.
+            </p>
+            <div className="mt-4 flex justify-between">
+              <button
+                className="bg-gray-300 text-black w-32 py-2 rounded-lg"
+                onClick={cancelDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-red-600 text-white w-32 py-2 rounded-lg"
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
-      </div>
-      <div className="w-[225px] h-[53px] border-black border-t flex justify-end items-center pt-4 gap-8">
-        <button className="border border-colorGreen py-2 px-4 text-[14px] text-colorGreen rounded-xl">
-          Join Meeting
-        </button>
-      </div>
+      )}
     </div>
   );
 };
 
-const PastMeetings = () => {
-  return (
-    <div className="max-md:w-full w-[345px] h-[114px] bg-white p-6 gap-6 flex items-center rounded-2xl">
-      <div className="w-full">
-        <div className="flex items-center w-full gap-4">
-          <img src={dateIcon} className="h-[38px] w-[38px]" />
-
-          <div className="flex flex-col text-[12px] text-textPrimary gap-2">
-            <h2>Meeting Name</h2>
-            <h2>Nov 10, 11:30am - 01:20pm</h2>
-            <div className="flex gap-3">
-              <div className="px-2 py-1 border border-colorRed rounded-2xl text-colorRed">
-                Meeting
-              </div>
-              <div className="px-2 py-1 border border-colorRed rounded-2xl text-colorRed">
-                Desgin
-              </div>
-            </div>
+const PastMeetups = ({ meetings }) => (
+  <div className="space-y-4">
+    {meetings.map((meeting) => (
+      <div
+        key={meeting.id}
+        className="flex justify-between p-4 bg-white rounded-xl shadow-md"
+      >
+        <div>
+          <div className="flex items-center">
+            <img src={dateIcon} className="h-[38px] w-[38px]" />
+            <span className="font-semibold ml-2">{meeting.title}</span>
           </div>
-          <img src={options} className="w-6 h-6 ml-auto" />
+          <span className="text-muted-foreground">
+            {new Date(meeting.start_time).toLocaleString()}
+          </span>
         </div>
+        <img src={options} className="w-6 h-6" />
       </div>
+    ))}
+  </div>
+);
+
+const ArchivedMeetups = ({ meetings }) => (
+  <div className="space-y-4">
+    {meetings.map((meeting) => (
+      <div
+        key={meeting.id}
+        className="flex justify-between p-4 bg-white rounded-xl shadow-md"
+      >
+        <div>
+          <div className="flex items-center">
+            <img src={dateIcon} className="h-[38px] w-[38px]" />
+            <span className="font-semibold ml-2">{meeting.title}</span>
+          </div>
+          <span className="text-muted-foreground">
+            {new Date(meeting.start_time).toLocaleString()}
+          </span>
+        </div>
+        <img src={options} className="w-6 h-6" />
+      </div>
+    ))}
+  </div>
+);
+
+const MembersCard = ({ member }) => (
+  <div className="flex gap-[14px] items-center">
+    <div className="w-[25px] h-[25px] border rounded-full"></div>
+    <div className="gap-2">
+      <h1 className="text-[12px] font-bold text-textDarkBlue">
+        {member.email}
+      </h1>
     </div>
-  );
-};
+  </div>
+);
+
+export default MeetingUI;

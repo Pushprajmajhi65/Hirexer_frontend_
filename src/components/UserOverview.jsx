@@ -166,73 +166,98 @@ export const UserOverviewUI = () => {
   );
 };
 
+
 export const NavBar = () => {
   return (
-    <div className="hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 xl:flex flex-col gap-[70px] sticky top-0">
+    <div className="hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 xl:flex flex-col gap-[70px] sticky top-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
       <img src={logo} className="w-[50px] h-[44px]" />
       <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
         <Link
           to="/overview"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
           <img src={overview} className="w-5 h-5" />
           Overview
         </Link>
         <Link
           to="/feed"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
           <img src={feed} className="w-5 h-5" />
           Feed
         </Link>
         <Link
           to="/meeting"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
           <img src={meeting} className="w-5 h-5" />
           Meetings
         </Link>
         <Link
           to="/employee"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
           <img src={meeting} className="w-5 h-5" />
           Employees
+        </Link>
+        <Link
+          to="/application"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
+        >
+          <img src={meeting} className="w-5 h-5" />
+          Application
         </Link>
       </div>
     </div>
   );
 };
+
 export const SmallScreenNavBar = () => {
   return (
-    <div className="max-xl:flex hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 flex-col gap-[70px] fixed z-10 left-0">
+    <div className="max-xl:flex hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 flex-col gap-[70px] fixed z-10 left-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
       <img src={logo} className="w-[50px] h-[44px]" />
       <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
         <Link
           to="/overview"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
           <img src={overview} className="w-5 h-5" />
           Overview
         </Link>
         <Link
           to="/feed"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
           <img src={feed} className="w-5 h-5" />
           Feed
         </Link>
         <Link
           to="/meeting"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
           <img src={meeting} className="w-5 h-5" />
           Meetings
+        </Link>
+        <Link
+          to="/employee"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
+        >
+          <img src={meeting} className="w-5 h-5" />
+          Employees
+        </Link>
+        <Link
+          to="/application"
+          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
+        >
+          <img src={meeting} className="w-5 h-5" />
+          Application
         </Link>
       </div>
     </div>
   );
 };
+
+
 
 export const FriendRequestTab = () => {
   return (
