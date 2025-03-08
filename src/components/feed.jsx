@@ -47,50 +47,89 @@ export const FeedUI = () => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
-  if (loading) {
-    return <div>Loading...</div>; // Loading state
-  }
 
   return (
     <div className="flex w-full h-full gap-8 bg-backgroundGray max-sm:px-0 px-[40px] pb-[80px] justify-center xl:justify-start xl:p-0">
-      <NavBar />
-      {showNavBar ? (
-        <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
-          <SmallScreenNavBar />
-        </div>
-      ) : null}
-      <div className="flex flex-col w-full xl:w-[1100px] h-full gap-6 px-[40px] pb-[80px] xl:p-0">
-        <div className="w-full h-[92px] flex items-center justify-end gap-[10px]">
-          <button className="mr-auto xl:hidden" onClick={toggleNavBar}>
-            <img src={navicon} className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-2 p-3">
-            <MoreProfileOptions />
-            <img src={notifaction} className="w-5 h-5" />
-            <img src={settting} className="w-5 h-5" />
-          </div>
-        </div>
-        <div className="flex flex-row gap-6 max-xl:flex-wrap">
-          <div className="flex flex-col gap-6">
-            <h1 className="text-[32px] font-semibold text-textPrimary">My Feeds</h1>
-            <button
-  className="bg-blue-500 text-white w-[140px] h-[48px] p-2 rounded-md ml-auto"
-  onClick={toggleCreatePostPopup}
->
-  Create Post
-</button>
-            {posts.map((post, index) => (
-              <FeedCard key={index} post={post} />
-            ))}
-          </div>
+    <NavBar />
+    {showNavBar ? (
+      <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
+        <SmallScreenNavBar />
+      </div>
+    ) : null}
+    <div className="flex flex-col w-full xl:w-[1100px] h-full gap-6 px-[40px] pb-[80px] xl:p-0">
+      <div className="w-full h-[92px] flex items-center justify-end gap-[10px]">
+        <button className="mr-auto xl:hidden" onClick={toggleNavBar}>
+          <img src={navicon} className="w-6 h-6" alt="Menu" />
+        </button>
+        <div className="flex items-center gap-2 p-3">
+          <MoreProfileOptions />
+          <img src={notifaction} className="w-5 h-5" alt="Notification" />
+          <img src={settting} className="w-5 h-5" alt="Settings" />
         </div>
       </div>
-      <CreatePostPopup
-        isOpen={isCreatePostOpen}
-        onClose={toggleCreatePostPopup}
-        onPostCreated={addNewPost}
-      />
-      
+      <div className="flex flex-row gap-6 max-xl:flex-wrap">
+        <div className="flex flex-col gap-6">
+          <h1 className="text-[32px] font-semibold text-textPrimary">My Feeds</h1>
+          <button
+            className="bg-blue-500 text-white w-[140px] h-[48px] p-2 rounded-md ml-auto"
+            onClick={toggleCreatePostPopup}
+          >
+            Create Post
+          </button>
+          {loading ? (
+            // Show skeleton loader for feed cards while loading
+            [...Array(4)].map((_, index) => <FeedCardSkeleton key={index} />)
+          ) : (
+            // Show actual feed cards after loading
+            posts.map((post, index) => <FeedCard key={index} post={post} />)
+          )}
+        </div>
+      </div>
+    </div>
+    <CreatePostPopup
+      isOpen={isCreatePostOpen}
+      onClose={toggleCreatePostPopup}
+      onPostCreated={addNewPost}
+    />
+  </div>
+);
+};
+
+
+// Skeleton Loader for Feed Cards
+const FeedCardSkeleton = () => {
+  return (
+    <div className="w-auto lg:w-[720px] h-auto lg:h-[596px] bg-white rounded-2xl p-6 flex flex-col gap-4 animate-pulse">
+      {/* Skeleton for User Profile Section */}
+      <div className="flex gap-2">
+        {/* Skeleton for Profile Picture */}
+        <div className="w-[56px] h-[56px] bg-gray-300 rounded-full"></div>
+
+        {/* Skeleton for User Info */}
+        <div className="flex flex-col gap-2">
+          <div className="h-4 w-32 bg-gray-300 rounded"></div> {/* Title */}
+          <div className="h-3 w-24 bg-gray-300 rounded"></div> {/* Person Name */}
+          <div className="h-3 w-20 bg-gray-300 rounded"></div> {/* Time */}
+        </div>
+
+        {/* Skeleton for Options Button */}
+        <div className="ml-auto">
+          <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+        </div>
+      </div>
+
+      {/* Skeleton for Post Description */}
+      <div className="flex flex-col gap-2">
+        <div className="h-4 w-full bg-gray-300 rounded"></div>
+        <div className="h-4 w-3/4 bg-gray-300 rounded"></div>
+        <div className="h-4 w-1/2 bg-gray-300 rounded"></div>
+      </div>
+
+      {/* Skeleton for Post Image */}
+      <div className="w-full h-48 bg-gray-300 rounded-lg"></div>
+
+      {/* Skeleton for Ad Image */}
+      <div className="w-full h-24 bg-gray-300 rounded-lg"></div>
     </div>
   );
 };

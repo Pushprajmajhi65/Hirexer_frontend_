@@ -21,6 +21,7 @@ import { WorkspaceProvider } from "./components/WorkspaceContext"; // Import the
 import { Applications } from "./components/application";
 
 
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation(); // Use useLocation to access location.state
@@ -47,6 +48,10 @@ function App() {
         <Route path="/profile" element={<MyProfile />} />
         
         <Route path="/application" element={<Applications />} />
+        <Route path="/live-video" element={<LiveVideo />} />
+      
+       
+  
     
 
         {/* Agora RTC-related routes */}

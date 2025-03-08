@@ -9,37 +9,62 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import navicon from "../images/Commonimg/navicon.png";
 import { MoreProfileOptions } from "./profile";
+import EmployeeTable, { ManageEmployeeCard } from "./employee";
+
+
+
 
 export const UserOverviewUI = () => {
   const [showNavBar, setShowNavBar] = useState(false);
+  // const [searchQuery, setSearchQuery] = useState("");
+
   const toggleNavBar = () => {
     setShowNavBar((prev) => !prev);
   };
 
   return (
-    <div className="flex w-ful h-full gap-8 bg-backgroundGray max-sm:px-0 px-[40px] pb-[80px] justify-center xl:justify-start xl:p-0">
+    <div className="flex w-full h-full gap-8 bg-backgroundGray px-5 max-sm:px-5 pb-[80px] justify-center xl:justify-start xl:p-0">
       <NavBar />
-      {showNavBar ? (
-        <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
-          <SmallScreenNavBar />
-        </div>
-      ) : null}
-      <div className="flex flex-col w-full lg:w-[1100px]  h-full gap-6 px-[40px] pb-[80px] xl:p-0">
+      {/* Overlay and Sidebar for Mobile */}
+      {showNavBar && (
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 transition-opacity duration-300 ease-in-out"
+            onClick={toggleNavBar}
+          ></div>
+          <div
+            className="fixed z-30 w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 transform transition-transform duration-300 ease-in-out"
+            style={{
+              transform: showNavBar ? "translateX(0)" : "translateX(-100%)",
+            }}
+          >
+            <SmallScreenNavBar />
+          </div>
+        </>
+      )}
+       <div className="flex flex-col w-full lg:w-[1100px] h-full gap-6 sm:px-2 px-[40px] sm:pb-0 pb-[80px] xl:px-0 xl:p-0">
         <div className="w-full h-[92px] flex items-center justify-end gap-[10px]">
           <button className="mr-auto xl:hidden" onClick={toggleNavBar}>
-            <img src={navicon} className="w-6 h-6" />
+            {/* Toggle between menu icon and close icon */}
+            <img
+              src={showNavBar ? closeIcon : navicon}
+              className="w-6 h-6"
+              alt={showNavBar ? "Close Menu" : "Open Menu"}
+            />
           </button>
           <div className="flex items-center gap-2 p-3">
             <MoreProfileOptions />
-            <img src={notifaction} className="w-5 h-5" />
-            <img src={settting} className="w-5 h-5" />
+            <img src={notifaction} className="w-5 h-5" alt="Notification" />
+            <img src={settting} className="w-5 h-5" alt="Settings" />
           </div>
         </div>
+
+        {/* Welcome Section */}
         <div className="h-auto md:h-[131px] w-full bg-backgroundGreen rounded-xl p-6 flex flex-col md:flex-row">
           <h1 className="text-[30px] font-semibold text-textPrimary">
             Good Morning,
             <br />
-            Pushpraj
+            Pushpraj 
           </h1>
           <div className="md:ml-auto w-[214px] h-full p-4 flex flex-col items-center justify-center gap-2">
             <div className="flex items-center gap-8">
@@ -47,217 +72,119 @@ export const UserOverviewUI = () => {
               <img src={weather} className="w-[66px] h-[53px]" />
             </div>
             <h2 className="text-xs font-semibold">
-              16:09 30th Sep Monday
+              16:09 30th Sep Monday  
               <h2 className="w-full text-xs font-semibold text-end">
                 Kathmandu
               </h2>
             </h2>
           </div>
         </div>
+
+        {/* Upcoming Meetings */}
         <div className="flex flex-col w-full gap-6 xl:flex-row">
-          <div className="flex flex-col gap-6 xl:hidden">
+          <div className="flex flex-col gap-6 w-full">
             <h1 className="text-[32px] text-textPrimary font-medium">
               Upcoming Meetings
             </h1>
             <UpcomingMeetingCard />
           </div>
-          <div className="flex flex-col items-start w-full gap-6 xl:hidden">
-            <h1 className="text-[32px] text-textPrimary font-medium">
-              Connections
-            </h1>
-            <div className="flex w-full gap-6 max-lg:flex-wrap">
-              <div className="flex flex-col w-auto gap-4 max-md:w-full">
-                <h1 className="text-[16px] text-textPrimary font-medium">
-                  Requests
-                </h1>
-                <FriendRequestTab />
-                <FriendRequestTab />
-                <FriendRequestTab />
-              </div>
-              <div className="flex flex-col w-[360px] gap-4 max-md:w-full">
-                <h1 className="text-[16px] text-textPrimary font-medium">
-                  Friends
-                </h1>
-                <FriendsTab />
-                <FriendsTab />
-                <FriendsTab />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-6">
-            <h1 className="text-[32px] text-textPrimary font-medium">
-              Invitations
-            </h1>
-            <div className="w-full overflow-auto">
-              <div className="h-[44px] w-full xl:w-[668px]  flex items-center gap-3 bg-white rounded-t-2xl">
-                <h2 className="w-[48px] text-center text-textSecondary text-[12px]">
-                  SN
-                </h2>
-                <h2 className="w-[170px] text-textSecondary text-[12px]">
-                  Work Space
-                </h2>
-                <h2 className="w-[168px] text-textSecondary text-[12px] max-sm:hidden">
-                  Invite Date
-                </h2>
-                <h2 className="w-[271px] text-textSecondary text-[12px] max-sm:hidden">
-                  Message
-                </h2>
-              </div>
-              <InvitationsCard />
-              <InvitationsCard />
-              <InvitationsCard />
-            </div>
-            <h1 className="text-[32px] text-textPrimary font-medium">Tasks</h1>
-            <div className="w-full overflow-auto">
-              <div className="h-[44px] w-full xl:w-[668px] flex items-center gap-3 bg-white rounded-t-2xl">
-                <h2 className="w-[48px] text-center text-textSecondary text-[12px]">
-                  SN
-                </h2>
-                <h2 className="w-[170px] text-textSecondary text-[12px]">
-                  Task Name
-                </h2>
-                <h2 className="w-[168px] text-textSecondary text-[12px] max-sm:hidden">
-                  Work Space
-                </h2>
-                <h2 className="w-[271px] text-textSecondary text-[12px] max-sm:hidden">
-                  Due Date
-                </h2>
-              </div>
-              <InvitationsCard />
-              <InvitationsCard />
-              <InvitationsCard />
-            </div>
-          </div>
-          <div className="flex flex-col gap-6">
-            <div className="flex-col hidden gap-6 xl:flex">
-              <h1 className="text-[32px] text-textPrimary font-medium">
-                Upcoming Meetings
-              </h1>
-              <UpcomingMeetingCard />
-            </div>
-            <div className="flex-col items-start hidden gap-6 xl:flex">
-              <h1 className="text-[32px] text-textPrimary font-medium">
-                Connections
-              </h1>
-              <div className="flex flex-col flex-wrap gap">
-                <div className="flex flex-col gap-4 ">
-                  <h1 className="text-[16px] text-textPrimary font-medium">
-                    Requests
-                  </h1>
-                  <FriendRequestTab />
-                  <FriendRequestTab />
-                  <FriendRequestTab />
-                </div>
-                <div className="flex flex-col gap-4">
-                  <h1 className="text-[16px] text-textPrimary font-medium">
-                    Friends
-                  </h1>
-                  <FriendsTab />
-                  <FriendsTab />
-                  <FriendsTab />
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
+
+        <ManageEmployeeCard />
       </div>
     </div>
   );
 };
-
-
 export const NavBar = () => {
   return (
     <div className="hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 xl:flex flex-col gap-[70px] sticky top-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <img src={logo} className="w-[50px] h-[44px]" />
+      <img src={logo} className="w-[50px] h-[44px]" alt="Logo" />
       <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
         <Link
           to="/overview"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={overview} className="w-5 h-5" />
+          <img src={overview} className="w-5 h-5" alt="Overview" />
           Overview
         </Link>
         <Link
           to="/feed"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={feed} className="w-5 h-5" />
+          <img src={feed} className="w-5 h-5" alt="Feed" />
           Feed
         </Link>
         <Link
           to="/meeting"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={meeting} className="w-5 h-5" />
+          <img src={meeting} className="w-5 h-5" alt="Meetings" />
           Meetings
         </Link>
         <Link
           to="/employee"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={meeting} className="w-5 h-5" />
+          <img src={meeting} className="w-5 h-5" alt="Employees" />
           Employees
         </Link>
         <Link
           to="/application"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={meeting} className="w-5 h-5" />
+          <img src={meeting} className="w-5 h-5" alt="Application" />
           Application
         </Link>
       </div>
     </div>
   );
 };
+
 
 export const SmallScreenNavBar = () => {
   return (
-    <div className="max-xl:flex hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 flex-col gap-[70px] fixed z-10 left-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <img src={logo} className="w-[50px] h-[44px]" />
+    <div className="flex flex-col gap-[70px]">
+      <img src={logo} className="w-[50px] h-[44px]" alt="Logo" />
       <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
         <Link
           to="/overview"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={overview} className="w-5 h-5" />
+          <img src={overview} className="w-5 h-5" alt="Overview" />
           Overview
         </Link>
         <Link
           to="/feed"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={feed} className="w-5 h-5" />
+          <img src={feed} className="w-5 h-5" alt="Feed" />
           Feed
         </Link>
         <Link
           to="/meeting"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={meeting} className="w-5 h-5" />
+          <img src={meeting} className="w-5 h-5" alt="Meetings" />
           Meetings
         </Link>
         <Link
           to="/employee"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={meeting} className="w-5 h-5" />
+          <img src={meeting} className="w-5 h-5" alt="Employees" />
           Employees
         </Link>
         <Link
           to="/application"
           className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
         >
-          <img src={meeting} className="w-5 h-5" />
+          <img src={meeting} className="w-5 h-5" alt="Application" />
           Application
         </Link>
       </div>
     </div>
   );
 };
-
-
 
 export const FriendRequestTab = () => {
   return (
@@ -302,25 +229,25 @@ export const FriendsTab = () => {
 
 const UpcomingMeetingCard = () => {
   return (
-    <div className="w-full xl:w-[362px] max-sm:h-auto h-[414px] bg-white rounded-2xl p-6 gap-4 flex flex-col">
+    <div className="w-full h-auto bg-white rounded-2xl p-6 gap-4 flex flex-col">
       <div className="flex items-center">
         <h1 className="text-base font-bold">Upcoming appointments</h1>
         <span className="ml-auto text-xs font-semibold text-colorCyan">
           View all
         </span>
       </div>
-      <div className="w-full xl:w-[314px] h-[86px] rounded-2xl bg-backgroundCard py-[10px] px-3 flex-col flex max-md:gap-0 md:flex-row max-xl:gap-6 max-xl:items-center xl:flex-col xl:gap-1">
-        <h2 className="text-colorCyan font-semibold text-[120x]">Today</h2>
+      <div className="w-full h-[86px] rounded-2xl bg-backgroundCard py-[10px] px-3 flex flex-col max-md:gap-0 md:flex-row max-xl:gap-6 max-xl:items-center xl:flex-col xl:gap-1">
+        <h2 className="text-colorCyan font-semibold text-[20px]">Today</h2>
         <h1 className="text-[16px] font-bold">Susan Kardashian</h1>
         <h3 className="font-medium text-borderGray text-[12px]">
           01:00PM - 03:00PM
         </h3>
       </div>
-      <span className="w-full border border-borderGray2 h-2px"></span>
-      <div className="flex flex-wrap gap-3">
-        <MeetingSceduleCard />
-        <MeetingSceduleCard />
-        <MeetingSceduleCard />
+      <span className="w-full border border-borderGray2"></span>
+      <div className="flex flex-wrap gap-3 w-full">
+        <MeetingSceduleCard className="w-full md:w-[48%] lg:w-[32%]" />
+        <MeetingSceduleCard className="w-full md:w-[48%] lg:w-[32%]" />
+        <MeetingSceduleCard className="w-full md:w-[48%] lg:w-[32%]" />
       </div>
     </div>
   );

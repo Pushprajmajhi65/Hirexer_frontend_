@@ -3,10 +3,17 @@ import welcome from "../images/onBoarding/Welcome.png";
 
 import add from "../images/onBoarding/add.png";
 import group from "../images/onBoarding/groupimg.png";
-import { Link } from "react-router-dom";
+import { Link, } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api";
+import Lottie from 'react-lottie';
+
+import SUCESS from "../assets/success.json";
+
+
+
+
 
 export const OnBoardingOne = () => {
   return (
@@ -115,108 +122,99 @@ export const OnBoardingTwo = () => {
               Let's Start with your
               <br /> Onboarding
             </h1>
-            <form
-              className="flex flex-col w-full mt-6"
-              onSubmit={createWorkspace}
-            >
-              <fieldset className="flex flex-col mb-4">
-                <label className="text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold mb-1">
-                  Workspace Name
-                </label>
-                <input
-                  className="w-full h-[36px] sm:h-[44px] md:h-[46px] lg:h-[48px] text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] outline-none border rounded-xl px-3"
-                  type="text"
-                  value={workspaceName}
-                  onChange={(e) => setWorkspaceName(e.target.value)}
-                  placeholder="e.g., John’s Bakery"
-                  required
-                />
-              </fieldset>
+            <form className="flex flex-col w-full mt-6" onSubmit={createWorkspace}>
+  <fieldset className="border-2 rounded-md mb-4">
+    <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+      Workspace Name:
+    </legend>
+    <input
+      className="w-[97%] h-[31px] text-[16px] outline-none mb-2 ml-2"
+      type="text"
+      value={workspaceName}
+      onChange={(e) => setWorkspaceName(e.target.value)}
+      placeholder="e.g., John’s Bakery"
+      required
+    />
+  </fieldset>
 
-              <fieldset className="flex flex-col mb-4">
-                <label className="text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold mb-1">
-                  Email
-                </label>
-                <input
-                  className="w-full h-[36px] sm:h-[44px] md:h-[46px] lg:h-[48px] text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] outline-none border rounded-xl px-3"
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Yourmail@gmail.com"
-                  required
-                />
-              </fieldset>
+  <fieldset className="border-2 rounded-md mb-4">
+    <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+      Email:
+    </legend>
+    <input
+      className="w-[97%] h-[31px] text-[16px] outline-none mb-2 ml-2"
+      type="email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      placeholder="Yourmail@gmail.com"
+      required
+    />
+  </fieldset>
 
-              <fieldset className="flex flex-col mb-4">
-                <label className="text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold mb-1">
-                  Country
-                </label>
-                <input
-                  className="w-full h-[36px] sm:h-[44px] md:h-[46px] lg:h-[48px] text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] outline-none border rounded-xl px-3"
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="Nepal"
-                  required
-                />
-              </fieldset>
+  <fieldset className="border-2 rounded-md mb-4">
+    <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+      Country:
+    </legend>
+    <input
+      className="w-[97%] h-[31px] text-[16px] outline-none mb-2 ml-2"
+      type="text"
+      value={country}
+      onChange={(e) => setCountry(e.target.value)}
+      placeholder="Nepal"
+      required
+    />
+  </fieldset>
 
-              <fieldset className="flex flex-col mb-4">
-                <label className="text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold mb-1">
-                  Industry
-                </label>
-                <select
-                  className="w-full h-[36px] sm:h-[44px] md:h-[46px] lg:h-[48px] text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] outline-none border rounded-xl px-3"
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  required
-                >
-                  <option>Select an industry</option>
-                  <option>Technology</option>
-                  <option>Healthcare</option>
-                  <option>Education</option>
-                  <option>Finance</option>
-                </select>
-              </fieldset>
+  <fieldset className="border-2 rounded-md mb-4">
+    <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+      Industry:
+    </legend>
+    <select
+      className="w-[97%] h-[31px] text-[16px] outline-none mb-2 ml-2"
+      value={industry}
+      onChange={(e) => setIndustry(e.target.value)}
+      required
+    >
+      <option>Select an industry</option>
+      <option>Technology</option>
+      <option>Healthcare</option>
+      <option>Education</option>
+      <option>Finance</option>
+    </select>
+  </fieldset>
 
-              <fieldset className="flex flex-col mb-4">
-                <label className="text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold mb-1">
-                  Phone number
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <select
-                    id="country-code"
-                    className="w-fit px-3 py-2 text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] border rounded-xl"
-                    required
-                  >
-                    <option>+977</option>
-                  </select>
-                  <input
-                    type="tel"
-                    pattern="[0-9]{10}"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full sm:flex-1 px-3 py-2 text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] border rounded-xl"
-                    placeholder="Enter phone number"
-                    required
-                  />
-                </div>
-              </fieldset>
+  <fieldset className="border-2 rounded-md mb-4">
+    <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+      Phone number:
+    </legend>
+   
+     
+      <input
+        type="tel"
+        pattern="[0-9]{10}"
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
+        className="w-[97%] h-[31px] text-[16px] outline-none mb-2 ml-2"
+        placeholder="Enter phone number"
+        required
+      />
 
-              <button
-                type="summit"
-                className="w-full h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-buttonBackground3 rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold text-white flex justify-center items-center mt-4"
-              >
-                Create Workspace
-              </button>
+  </fieldset>
 
-              <Link
-                to="/overview"
-                className="h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-white border rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold flex justify-center items-center mt-2"
-              >
-                Skip
-              </Link>
-            </form>
+  <button
+    type="submit"
+    className="w-full h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-buttonBackground3 rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold text-white flex justify-center items-center mt-4"
+  >
+    Create Workspace
+  </button>
+
+  <Link
+    to="/overview"
+    className="h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-white border rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold flex justify-center items-center mt-2"
+  >
+    Skip
+  </Link>
+</form>
           </div>
         </div>
       </div>
@@ -224,17 +222,41 @@ export const OnBoardingTwo = () => {
   );
 };
 
+
+
 export const OnBoardingThree = () => {
-  // States to handle email input and email list
   const [email, setEmail] = useState("");
   const [emails, setEmails] = useState([]);
+  const [loading, setLoading] = useState(false); // Loading state for the button
+  const [error, setError] = useState(""); // Error state
+  const [success, setSuccess] = useState(""); // Success state
+
+  // Function to validate email format
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
+    return emailRegex.test(email);
+  };
 
   // Function to handle adding email to the list
   const addEmailToList = () => {
-    if (email && !emails.includes(email)) {
-      setEmails([...emails, email]);
-      setEmail(""); // Clear the input field
+    if (!email) {
+      setError("Email cannot be empty.");
+      return;
     }
+
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (emails.includes(email)) {
+      setError("This email is already in the list.");
+      return;
+    }
+
+    setEmails([...emails, email]);
+    setEmail(""); // Clear the input field
+    setError(""); // Clear any previous error
   };
 
   // Function to handle deleting an email from the list
@@ -244,8 +266,12 @@ export const OnBoardingThree = () => {
 
   // Function to handle sending invitations
   const sendInvitations = async () => {
+    setLoading(true); // Start loading
+    setError("");
+    setSuccess("");
+
     try {
-      const workspaceId = 6;
+      const workspaceId = 6; // Replace with your workspace ID
       const token = localStorage.getItem("access_token");
 
       const response = await api.post(
@@ -255,40 +281,48 @@ export const OnBoardingThree = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
-      // Handle success response (optional)
-      etSuccess("Registration successful");
-      setError("");
-      setEmails([]);
+
+      setSuccess("Invitations sent successfully!");
+      setEmails([]); // Clear the email list
     } catch (err) {
-      // Handle errors from the API
-      setError(err.response?.data?.error || "Registration failed");
-      setSuccess("");
+      setError(err.response?.data?.error || "Failed to send invitations");
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   return (
     <div className="relative flex items-center justify-center w-screen h-screen font-poppins">
       <div className="w-[90%] max-w-[780px] h-auto md:h-[640px] bg-white flex flex-col rounded-2xl items-center justify-top relative px-6 sm:px-8 md:px-12 py-8 sm:py-12 md:py-16 gap-[24px] md:gap-[32px]">
-        <img 
-        // src={mailCard} 
-        className="w-[96px] sm:w-[120px] md:w-[144px]" />
+        <img
+          // src={mailCard}
+          className="w-[96px] sm:w-[120px] md:w-[144px]"
+          alt="Mail Card"
+        />
         <h1 className="text-[24px] sm:text-[28px] md:text-[36px] font-bold text-headerGray text-center">
           Invite members to workspace
         </h1>
         <form className="w-full font-semibold text-[16px] sm:text-[18px] flex flex-col gap-[16px] sm:gap-[20px] md:gap-[24px]">
-          <fieldset>
-            <label className="text-headerGray2">Enter emails</label>
+          {/* Email Input Field */}
+          <fieldset className="border-2 rounded-md mb-4">
+            <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+              Enter emails:
+            </legend>
             <div className="flex items-center gap-[8px] sm:gap-[12px] md:gap-[16px]">
               <input
-                className="w-full h-[36px] sm:h-[44px] md:h-[46px] lg:h-[48px] text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] outline-none border rounded-xl px-3"
-                type="text"
+                className="w-[97%] h-[31px] text-[16px] outline-none mb-2 ml-2"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Yourmail@gmail.com"
               />
-              <button type="button" onClick={addEmailToList}>
+              <button
+                type="button"
+                onClick={addEmailToList}
+                className="flex items-center justify-center"
+              >
                 <img
                   src={add}
                   className="h-[16px] sm:h-[18px] md:h-[20px]"
@@ -296,19 +330,32 @@ export const OnBoardingThree = () => {
                 />
               </button>
             </div>
+            {/* Display error message if email is invalid */}
+            {error && <p className="text-red-500 text-sm ml-2">{error}</p>}
           </fieldset>
 
           {/* Display the email list */}
           {emails.length > 0 && (
-            <div className="mt-4 border border-borderGray rounded-3xl w-[132px] flex items-center py-2 px-4 gap-2">
-              <div className="w-[26px] h-[26px] border-borderGray border rounded-full "></div>
-              <p className="mt-2 text-headerGray text-[10px] h-full text-center">
-                {emails.join(", ")}
-              </p>{" "}
-              {/* Join emails with comma and display in <p> */}
+            <div className="w-full">
+              {emails.map((email, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2 border border-borderGray rounded-md mb-2"
+                >
+                  <span className="text-textPrimary">{email}</span>
+                  <button
+                    type="button"
+                    onClick={() => deleteEmailFromList(email)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
+          {/* Buttons */}
           <div className="flex items-center justify-center w-full gap-4 sm:gap-5 md:gap-6">
             <Link to="/Onboarding-phase-three" className="w-full">
               <button className="w-full h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-buttonBackground3 rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold text-white flex justify-center items-center">
@@ -318,9 +365,10 @@ export const OnBoardingThree = () => {
             <button
               type="button"
               onClick={sendInvitations}
-              className="w-full h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-buttonBackground3 rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold text-white flex justify-center items-center"
+              disabled={loading || emails.length === 0} // Disable if loading or no emails
+              className="w-full h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-buttonBackground3 rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold text-white flex justify-center items-center disabled:opacity-50"
             >
-              Send Invitation
+              {loading ? "Sending Invitation..." : "Send Invitation"}
             </button>
             <Link
               to="/overview"
@@ -329,15 +377,52 @@ export const OnBoardingThree = () => {
               Skip
             </Link>
           </div>
+
+          {/* Success and Error Messages */}
+          {success && (
+            <p className="text-green-500 text-center mt-4">{success}</p>
+          )}
+          {error && <p className="text-red-500 text-center mt-4">{error}</p>}
         </form>
       </div>
     </div>
   );
 };
 
+
+
 export const OnBoardingFour = () => {
+  const [showOverlay, setShowOverlay] = useState(false);
+  const navigate = useNavigate(); // Use useNavigate instead of useHistory
+
+  const handleNextClick = () => {
+    setShowOverlay(true);
+
+    // Set a timeout to hide the overlay and redirect after 5 seconds
+    setTimeout(() => {
+      setShowOverlay(false);
+      navigate("/overview"); // Use navigate to redirect to /overview
+    }, 5000); // 5000 milliseconds = 5 seconds
+  };
+
+  // Lottie options for the success animation
+  const defaultOptions = {
+    loop: true,
+    autoplay: true, // Animation will play automatically
+    animationData: SUCESS, // Path to the animation JSON file
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice"
+    }
+  };
+
   return (
-    <div className="flex items-center justify-center w-screen h-screen px-4 bg-white sm:px-8">
+    <div className="flex items-center justify-center w-screen h-screen px-4 bg-white sm:px-8 relative">
+      {showOverlay && (
+        <div className="absolute inset-0 flex items-center justify-center z-50">
+          <Lottie options={defaultOptions} height={300} width={300} />
+        </div>
+      )}
+
       <div className="flex flex-col items-center justify-center gap-6 sm:gap-8 md:gap-10">
         <img
           src={group}
@@ -350,12 +435,12 @@ export const OnBoardingFour = () => {
         <p className="text-center text-[14px] sm:text-[16px] md:text-[18px] text-headerGray2 font-medium">
           Explore Hirexer and make your first hire convenient
         </p>
-        <Link
-          to="/overview"
+        <button
+          onClick={handleNextClick}
           className="w-full max-w-[197px] h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-buttonBackground2 rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold text-white flex justify-center items-center"
         >
           Next
-        </Link>
+        </button>
       </div>
     </div>
   );

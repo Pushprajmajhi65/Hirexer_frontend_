@@ -1,7 +1,7 @@
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { NavBar } from "./UserOverview";
 import { useState, useEffect } from "react";
-import axios from "axios";
+
 import api from "@/api";
 
 import toast from "react-hot-toast";
@@ -16,8 +16,84 @@ export const MyProfile = () => {
   );
 };
 
+
+
 const MyProfileCard = () => {
-  const { activeWorkspace } = useWorkspace(); // Access the active workspace
+  const [profileData, setProfileData] = useState({
+    name: "",
+    email: "",
+    photo: null,
+    company: "",
+    role: "",
+    country: "",
+    timeZone: "",
+  });
+
+  const [isEditing, setIsEditing] = useState(false); // Flag to toggle edit mode
+  const [updatedData, setUpdatedData] = useState(profileData); // Store the updated profile data
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const token = localStorage.getItem('access_token'); // Retrieve the access token from localStorage
+
+        const response = await fetch('http://127.0.0.1:8000/user-profile/', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`, // Add the Authorization header with the token
+            'Content-Type': 'application/json', // Optional, but good practice
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
+
+        const data = await response.json();
+        setProfileData(data);
+        setUpdatedData(data); // Update the initial data
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      }
+    };
+
+    fetchProfileData();
+  }, []);
+
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUpdatedData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  // Handle save changes
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem('access_token'); // Retrieve the access token from localStorage
+      const response = await fetch('http://127.0.0.1:8000/edit-user-profile/', {  // Update the endpoint here
+        method: 'PATCH', // Assuming PATCH is used to update user profile
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData), // Updated data to send to the server
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to save profile data');
+      }
+  
+      const data = await response.json();
+      setProfileData(data); // Update profile data after successful save
+      setIsEditing(false); // Exit editing mode
+    } catch (error) {
+      console.error("Error saving profile data:", error);
+    }
+  };
+  
 
   return (
     <div className="w-[1100px] h-[1344px] bg-white rounded-2xl py-8 px-8">
@@ -32,39 +108,46 @@ const MyProfileCard = () => {
           </div>
           <div className="w-full border"></div>
           <div className="flex flex-col w-full gap-10">
-            <div className="flex w-full gap-8">
-              <h1 className="w-[280px]">Workspace</h1>
-              <div className="flex gap-6 h-[44px] w-[512px]">
-                <input
-                  className="w-full border rounded-xl"
-                  value={activeWorkspace?.name || "No workspace selected"}
-                  readOnly
-                />
-              </div>
-            </div>
+            {/* Name */}
             <div className="flex w-full gap-8">
               <h1 className="w-[280px]">Name</h1>
               <div className="flex gap-6 h-[44px] w-[512px]">
                 <input
                   className="w-full border rounded-xl"
+                  name="name"
+                  value={updatedData.name || ""}
                   placeholder="Name"
+                  onChange={handleChange}
+                  disabled={!isEditing}
                 />
                 <input
                   className="w-full border rounded-xl"
-                  placeholder="LastName"
+                  name="lastName"
+                  value={updatedData.lastName || ""}
+                  placeholder="Last Name"
+                  onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
+
+            {/* Email */}
             <div className="flex w-full gap-8">
               <h1 className="w-[280px]">Email address</h1>
               <div className="flex gap-6 h-[44px] w-[512px]">
                 <input
                   className="w-full border rounded-xl"
                   type="email"
+                  name="email"
+                  value={updatedData.email || ""}
                   placeholder="Email"
+                  onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
+
+            {/* Photo */}
             <div className="flex w-full gap-8">
               <h1 className="w-[280px]">Your Photo</h1>
               <div className="flex gap-6 h-[126px] w-[512px]">
@@ -72,64 +155,104 @@ const MyProfileCard = () => {
                   <input
                     className="border rounded-xl w-[366px] h-[126px]"
                     type="file"
-                    placeholder="Email"
+                    placeholder="Upload Photo"
+                    disabled={!isEditing}
                   />
-                  <div className="w-[126px] h-[126px] rounded-full border"></div>
+                  {updatedData.photo && (
+                    <div className="w-[126px] h-[126px] rounded-full border">
+                      <img
+                        src={updatedData.photo}
+                        alt="Profile"
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+
+            {/* Company */}
             <div className="flex w-full gap-8">
               <h1 className="w-[280px]">Company</h1>
               <div className="flex gap-6 h-[44px] w-[512px]">
                 <input
                   className="w-full border rounded-xl"
-                  type="email"
-                  placeholder="Z studio"
+                  name="company"
+                  value={updatedData.company || ""}
+                  placeholder="Company Name"
+                  onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
+
+            {/* Role */}
             <div className="flex w-full gap-8">
               <h1 className="w-[280px]">Role</h1>
               <div className="flex gap-6 h-[44px] w-[512px]">
                 <input
                   className="w-full border rounded-xl"
-                  type="Product designer"
-                  placeholder="Product Designer"
+                  name="role"
+                  value={updatedData.role || ""}
+                  placeholder="Your Role"
+                  onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
+
+            {/* Country */}
             <div className="flex w-full gap-8">
               <h1 className="w-[280px]">Country</h1>
               <div className="flex gap-6 h-[44px] w-[512px]">
                 <input
                   className="w-full border rounded-xl"
-                  type="email"
-                  placeholder="Email"
+                  name="country"
+                  value={updatedData.country || ""}
+                  placeholder="Country"
+                  onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
+
+            {/* Time Zone */}
             <div className="flex w-full gap-8">
               <h1 className="w-[280px]">Time Zone</h1>
               <div className="flex gap-6 h-[44px] w-[512px]">
                 <input
                   className="w-full border rounded-xl"
-                  type="email"
-                  placeholder="Email"
+                  name="timeZone"
+                  value={updatedData.timeZone || ""}
+                  placeholder="Time Zone"
+                  onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
           </div>
           <div className="w-full border"></div>
         </div>
+        <div className="flex justify-end gap-4">
+          <button
+            className="py-2 px-4 bg-blue-500 text-white rounded-xl"
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            {isEditing ? "Cancel" : "Edit"}
+          </button>
+          {isEditing && (
+            <button
+              className="py-2 px-4 bg-green-500 text-white rounded-xl"
+              onClick={handleSave}
+            >
+              Save
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 };
-
-
-
-
-
 
 
 import { Link } from "react-router-dom"; // For navigation
