@@ -11,7 +11,7 @@ import {
   OnBoardingTwo,
 } from "./components/onboarding";
 import { UserOverviewUI } from "./components/UserOverview";
-import { MeetingUI } from "./components/Meeting";
+import { MeetingUI } from "./components/meeting";
 import { FeedUI } from "./components/feed";
 import { Employee } from "./components/employee";
 import { MyProfile } from "./components/profile";
