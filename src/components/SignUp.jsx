@@ -39,32 +39,37 @@ export const SignUpPage = () => {
   // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (isSubmitting) return; // Prevent double request
+  
+    if (isSubmitting) return;
     setIsSubmitting(true);
-
-    // Check password requirements
+  
     const missingCriteria = passwordChecker(password);
     if (missingCriteria.length > 0) {
       toast.error(`Password must contain: ${missingCriteria.join(", ")}`);
       setIsSubmitting(false);
       return;
     }
-
+  
     try {
       const response = await api.post("/auth/register/", {
         username: userName,
         email,
         password,
       });
-
+  
+      const { access, refresh } = response.data; // Extract tokens
+  
+      // Store tokens in local storage
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
+  
       toast.success("Registration Completed");
       setSuccess("Registration completed successfully!");
       setError("");
       navigate("/onBoarding");
     } catch (err) {
       console.error("Error during registration:", err.response?.data || err);
-
+  
       if (err.response) {
         const errorMessage =
           err.response.data?.error || err.response.data?.detail || "Registration failed";

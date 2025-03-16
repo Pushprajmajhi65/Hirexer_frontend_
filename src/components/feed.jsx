@@ -99,7 +99,7 @@ export const FeedUI = () => {
 // Skeleton Loader for Feed Cards
 const FeedCardSkeleton = () => {
   return (
-    <div className="w-auto lg:w-[720px] h-auto lg:h-[596px] bg-white rounded-2xl p-6 flex flex-col gap-4 animate-pulse">
+    <div className="w-auto lg:w-[1128px] h-auto lg:h-[596px] bg-white rounded-2xl p-6 flex flex-col gap-4 animate-pulse">
       {/* Skeleton for User Profile Section */}
       <div className="flex gap-2">
         {/* Skeleton for Profile Picture */}
@@ -143,7 +143,7 @@ const FeedCard = ({ post }) => {
   };
 
   return (
-    <div className="w-auto lg:w-[720px] h-auto lg:h-[596px] bg-white rounded-2xl p-6 flex flex-col gap-4">
+    <div className="w-auto lg:w-[1128px] h-auto bg-white rounded-2xl p-6 flex flex-col gap-4">
       <div className="flex gap-2">
         <div className="w-[56px] h-[56px] border border-black rounded-full"></div>
         <div>
@@ -185,8 +185,13 @@ const FeedCard = ({ post }) => {
         </div>
       </div>
       <div className="text-[16px] w-auto lg:w-[672px]">{post_description}</div>
-      {image && <img src={`http://127.0.0.1:8000${image}`} className="w-auto" />}
-      <img src={ad} className="w-auto" />
+
+      {/* Only show the image container and image if 'image' exists */}
+      {image && image !== "" && (
+        <div className="w-full flex justify-center">
+          <img src={image} className="max-w-full max-h-[80vh] object-contain rounded-lg" />
+        </div>
+      )}
 
       <ApplyJobPopup
         isOpen={isApplyPopupOpen}
@@ -197,6 +202,9 @@ const FeedCard = ({ post }) => {
     </div>
   );
 };
+
+
+
 
 
 
@@ -275,6 +283,7 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }) => {
         <h2 className="text-lg font-bold mb-2">Create Post</h2>
         {error && <p className="text-red-500 mb-2">{error}</p>}
 
+        {/* Post Title Input */}
         <input
           className="w-full p-2 border rounded-md mb-4 focus:outline-blue-500"
           type="text"
@@ -282,31 +291,47 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }) => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+        
+        {/* Post Description Input */}
         <textarea
           className="w-full p-2 border rounded-md mb-4 focus:outline-blue-500"
           placeholder="Post Description"
           value={postDescription}
           onChange={(e) => setPostDescription(e.target.value)}
         />
-        <input
+        
+        {/* Experience Dropdown */}
+        <select
           className="w-full p-2 border rounded-md mb-4 focus:outline-blue-500"
-          type="text"
-          placeholder="Experience (optional)"
           value={experience}
           onChange={(e) => setExperience(e.target.value)}
-        />
-        <input
+        >
+          <option value="">Select Experience</option>
+          <option value="Less than 6 months">Less than 6 months</option>
+          <option value="6-12 months">6-12 months</option>
+          <option value="More than 12 months">More than 1 year</option>
+          <option value="More than 12 months">More than 1 years</option>
+        </select>
+        
+        {/* Post Type Dropdown */}
+        <select
           className="w-full p-2 border rounded-md mb-4 focus:outline-blue-500"
-          type="text"
-          placeholder="Post Type (e.g., Job, Casual)"
           value={postType}
-          onChange={(e) => setPostType(e.target.value)} // Handle post_type input
-        />
+          onChange={(e) => setPostType(e.target.value)}
+        >
+          <option value="">Select Post Type</option>
+          <option value="Job Post">Job Post</option>
+          <option value="Casual Post">Casual Post</option>
+        </select>
+
+        {/* Image Input */}
         <input
           className="w-full p-2 border rounded-md mb-4"
           type="file"
           onChange={(e) => setImage(e.target.files[0])}
         />
+
+        {/* Buttons */}
         <div className="flex justify-between">
           <button
             className="bg-gray-500 text-white p-2 rounded-md"
@@ -325,6 +350,7 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }) => {
     </div>
   );
 };
+
 
 
 const ApplyJobPopup = ({ isOpen, onClose, post, onApplicationSubmitted }) => {

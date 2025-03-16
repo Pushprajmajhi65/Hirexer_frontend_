@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import remove from "../images/Commonimg/remove.png";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { NavBar } from "./UserOverview";
-import Fuse from "fuse.js";
+
 import api from "@/api";
 import Lottie from 'react-lottie';
+
+
 
 import NODATA from "../assets/NODATA.json";
 import error404 from "../assets/error404.json";
@@ -58,56 +60,67 @@ export const ManageEmployeeCard = () => {
   );
 };
 
-const EmployeeTable = ({ searchQuery }) => {
-  const [workspaceMembers, setWorkspaceMembers] = useState([]);
+
+
+
+
+const EmployeeTable = () => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [fuse, setFuse] = useState(null);
+  const [error, setError] = useState(false);
 
+  // Simulate data fetch
   useEffect(() => {
-    const fetchMembers = async () => {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setError('No authentication token found');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/workspaces/1/members/', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch members');
-        }
-        const data = await response.json();
-        setWorkspaceMembers(data);
-
-        // Initialize Fuse.js after data is fetched
-        const fuseInstance = new Fuse(data, {
-          keys: ["username", "email"], // Specify which fields to search in
-          includeScore: true,
-          threshold: 0.6, // Adjust threshold for fuzzy matching
-        });
-        setFuse(fuseInstance);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMembers();
+    setTimeout(() => {
+      setLoading(false);
+      setError(false); // Set true to test error state
+    }, 2000); // Simulating API delay
   }, []);
 
-  // Filter members using fuse.js
-  const filteredMembers = searchQuery ? fuse.search(searchQuery).map(result => result.item) : workspaceMembers;
+  // Static employee data
+  const employees = [
+    {
+      id: 1,
+      username: "John Doe",
+      email: "john.doe@example.com",
+      joined_at: "2023-05-12",
+      role: "Software Engineer",
+      status: "Active",
+    },
+    {
+      id: 2,
+      username: "Jane Smith",
+      email: "jane.smith@example.com",
+      joined_at: "2022-11-25",
+      role: "Project Manager",
+      status: "Inactive",
+    },
+    {
+      id: 3,
+      username: "Michael Johnson",
+      email: "michael.johnson@example.com",
+      joined_at: "2021-07-19",
+      role: "Designer",
+      status: "Active",
+    },
+    {
+      id: 4,
+      username: "Emily Davis",
+      email: "emily.davis@example.com",
+      joined_at: "2020-09-30",
+      role: "HR Manager",
+      status: "Active",
+    },
+    {
+      id: 5,
+      username: "David Wilson",
+      email: "david.wilson@example.com",
+      joined_at: "2019-12-10",
+      role: "Marketing Lead",
+      status: "Inactive",
+    },
+  ];
 
+  // Loading state
   if (loading) {
     return (
       <div className="bg-white">
@@ -116,10 +129,7 @@ const EmployeeTable = ({ searchQuery }) => {
             key={rowIndex}
             className="flex items-center w-full h-[72px] border-t border-b animate-pulse"
           >
-            {/* Serial Number */}
-            <div className="text-center w-14 h-fit bg-gray-300 rounded h-4"></div>
-  
-            {/* Profile and Name */}
+            <div className="w-14 h-4 bg-gray-300 rounded"></div>
             <div className="h-fit px-6 w-[296px] flex gap-[12px] items-center">
               <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
               <div className="flex flex-col gap-2">
@@ -127,29 +137,15 @@ const EmployeeTable = ({ searchQuery }) => {
                 <div className="bg-gray-300 rounded h-3 w-1/2"></div>
               </div>
             </div>
-  
-            {/* Join Date */}
             <div className="h-fit px-6 w-[122px] bg-gray-300 rounded h-4"></div>
-  
-            {/* Date of Birth */}
             <div className="h-fit px-6 w-[122px] bg-gray-300 rounded h-4"></div>
-  
-            {/* Phone Number */}
             <div className="h-fit px-6 w-[122px] bg-gray-300 rounded h-4"></div>
-  
-            {/* Role */}
             <div className="h-fit px-6 w-[117px] bg-gray-300 rounded h-4"></div>
-  
-            {/* Status */}
             <div className="h-fit px-6 w-[122px] bg-gray-300 rounded h-4"></div>
-  
-            {/* Action Button */}
             <div className="h-fit px-6 w-[100px]">
               <div className="py-1 px-[6px] rounded-xl bg-gray-300 w-fit h-4"></div>
             </div>
-  
-            {/* Remove Button */}
-            <div className="h-fit px-6 w-[full]">
+            <div className="h-fit px-6 w-full">
               <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
             </div>
           </div>
@@ -157,68 +153,70 @@ const EmployeeTable = ({ searchQuery }) => {
       </div>
     );
   }
+
+  // Error state
   if (error) {
     return (
-      <div>
-     <Lottie 
-      options={{
-        animationData: error404, // Pass the JSON animation data here
-        loop: true, // Set loop as needed
-        autoplay: true, // Set autoplay as needed
-      }}
-      height={400} // Set the height and width as needed
-      width={400}
-    />
-    </div>
+      <div className="flex justify-center items-center">
+        <Lottie
+          options={{
+            animationData: error404,
+            loop: true,
+            autoplay: true,
+          }}
+          height={300}
+          width={300}
+        />
+      </div>
     );
   }
 
+  // Static employee table
   return (
-    <div>
-  {filteredMembers.length === 0 ? (
-    <div>
-     <Lottie 
-      options={{
-        animationData: NODATA, // Pass the JSON animation data here
-        loop: true, // Set loop as needed
-        autoplay: true, // Set autoplay as needed
-      }}
-      height={400} // Set the height and width as needed
-      width={400}
-    />
-    </div>
-  ) : (
-    filteredMembers.map((member, index) => (
-      <div key={member.id} className="flex items-center w-[1100px] h-[72px] border-t border-b">
-        <h2 className="text-center w-14 h-fit text-textBlack text-[15px] font-medium">{index + 1}</h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[296px] flex gap-[12px] items-center">
-          <div className="w-10 h-10 border rounded-full"></div>
-          <div>
-            <p>{member.username}</p>
-            <p className="text-xs text-textSecondary">{member.email}</p>
+    <div className="bg-white">
+      {employees.length === 0 ? (
+        <div className="flex justify-center items-center">
+          <Lottie
+            options={{
+              animationData: NODATA,
+              loop: true,
+              autoplay: true,
+            }}
+            height={300}
+            width={300}
+          />
+        </div>
+      ) : (
+        employees.map((member, index) => (
+          <div
+            key={member.id}
+            className="flex items-center w-[1100px] h-[72px] border-t border-b"
+          >
+            <h2 className="text-center w-14 h-fit text-textBlack text-[15px] font-medium">
+              {index + 1}
+            </h2>
+            <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[296px] flex gap-[12px] items-center">
+              <div className="w-10 h-10 border rounded-full"></div>
+              <div>
+                <p>{member.username}</p>
+                <p className="text-xs text-textSecondary">{member.email}</p>
+              </div>
+            </h2>
+            <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
+              {new Date(member.joined_at).toLocaleDateString()}
+            </h2>
+            <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
+              {member.role}
+            </h2>
+            <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[100px]">
+              <p className="py-1 px-[6px] rounded-xl border w-fit text-xs font-medium">
+                {member.status}
+              </p>
+            </h2>
           </div>
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]">
-          {new Date(member.joined_at).toLocaleDateString()}
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]"></h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[117px]">{member.role}</h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[122px]"></h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[100px]">
-          <p className="py-1 px-[6px] rounded-xl border w-fit text-xs font-medium">{member.status}</p>
-        </h2>
-        <h2 className="h-fit text-textBlack text-[14px] font-normal px-6 w-[full]">
-          <Dialog>
-            <DialogTrigger>
-              <img src={remove} className="w-10 h-10" alt="Remove" />
-            </DialogTrigger>
-            <DeleteUser onDelete={() => handleDeleteMember(member.id)} />
-          </Dialog>
-        </h2>
-      </div>
-    ))
-  )}
-</div>
+        ))
+      )}
+    </div>
   );
 };
 

@@ -1,11 +1,11 @@
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { NavBar } from "./UserOverview";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-
-import api from "@/api";
+import useWorkspace from "./useWorkspace";
 
 import toast from "react-hot-toast";
-import { useWorkspace } from "./WorkspaceContext";
+
 
 export const MyProfile = () => {
   return (
@@ -255,72 +255,24 @@ const MyProfileCard = () => {
 };
 
 
-import { Link } from "react-router-dom"; // For navigation
-
 
 
 export const MoreProfileOptions = () => {
-  const [workspaces, setWorkspaces] = useState([]);
-  const { activeWorkspace, setActiveWorkspace, setWorkspaceMembers } = useWorkspace(); 
-  const accessToken = localStorage.getItem("access_token");
-
-  useEffect(() => {
-    const fetchWorkspaces = async () => {
-      try {
-        const response = await api.get("/api/workspaces/", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        setWorkspaces(response.data);
-
-        const savedWorkspace = localStorage.getItem("activeWorkspace");
-        if (savedWorkspace) {
-          const parsedWorkspace = JSON.parse(savedWorkspace);
-          setActiveWorkspace(parsedWorkspace);
-          fetchWorkspaceMembers(parsedWorkspace.id);
-        }
-      } catch (error) {
-        console.error("Error fetching workspaces", error);
-        toast.error("Failed to fetch workspaces");
-      }
-    };
-
-    fetchWorkspaces();
-  }, [accessToken, setActiveWorkspace]);
-
-  const fetchWorkspaceMembers = async (workspaceId) => {
-    try {
-      const response = await api.get(`/api/workspaces/${workspaceId}/members/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      setWorkspaceMembers(response.data); 
-    } catch (error) {
-      console.error("Error fetching workspace members:", error);
-      toast.error("Failed to fetch workspace members");
-    }
-  };
-
-  const handleWorkspaceSwitch = (workspaceId) => {
-    const selectedWorkspace = workspaces.find((ws) => ws.id === workspaceId);
-    if (selectedWorkspace) {
-      setActiveWorkspace(selectedWorkspace);
-      localStorage.setItem("activeWorkspace", JSON.stringify(selectedWorkspace));
-      fetchWorkspaceMembers(selectedWorkspace.id);
-      toast.success(`Switched to workspace: ${selectedWorkspace.name}`);
-    } else {
-      toast.error("Workspace not found");
-    }
-  };
+  const navigate = useNavigate();
+  const { workspaces, activeWorkspace, switchWorkspace } = useWorkspace(); // Use the custom hook
+  const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
 
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("activeWorkspace");
-    toast.success("You have been logged out");
-    navigate("/");
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    toast.success('You have been logged out');
+    localStorage.removeItem('activeWorkspace'); 
+    navigate('/');
+  };
+
+  const handleWorkspaceChange = (workspace) => {
+    switchWorkspace(workspace); // Switch workspace using the custom hook
+    setIsWorkspaceDropdownOpen(false); // Close the dropdown
   };
 
   return (
@@ -329,7 +281,7 @@ export const MoreProfileOptions = () => {
         <div className="flex w-[158px] h-[44px] gap-2">
           <div className="border border-black rounded-full h-11 w-11"></div>
           <div>
-            <h1 className="font-bold">Jone Doe</h1>
+            <h1 className="font-bold">John Doe</h1>
             <p className="text-xs text-textSecondary">Super Admin</p>
           </div>
         </div>
@@ -337,29 +289,16 @@ export const MoreProfileOptions = () => {
       <PopoverContent className="w-[297px] py-4 px-6 flex flex-col items-center gap-2 max-h-[80vh] overflow-auto">
         <div className="flex flex-col items-center">
           <div className="h-[50px] w-[50px] rounded-full border border-black"></div>
-          <h1 className="text-xs text-textSecondary">Workspace Name</h1>
+          <h1 className="text-xs text-textSecondary">Default Workspace</h1>
         </div>
         <div className="flex flex-col w-full gap-2">
-          {/* Workspace Dropdown */}
-          <select
-            onChange={(e) => handleWorkspaceSwitch(Number(e.target.value))}
-            value={activeWorkspace?.id || ""}
-            className="border rounded-xl h-[40px] w-full"
-          >
-            <option value="" disabled>
-              Select a workspace
-            </option>
-            {workspaces.map((workspace) => (
-              <option key={workspace.id} value={workspace.id}>
-                {workspace.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Add New Workspace Button */}
-          <Link to="/Onboarding-phase-one">
-            <button className="w-full h-[40px] bg-backgroundGreen text-white rounded-xl flex items-center justify-center gap-2">
-              <span>Add New Workspace</span>
+          {/* Custom Workspace Switcher */}
+          <div className="relative">
+            <button
+              onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
+              className="w-full h-[40px] bg-backgroundGreen text-white rounded-xl flex items-center justify-between px-4"
+            >
+              <span>{activeWorkspace?.name || 'Select a workspace'}</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -368,12 +307,61 @@ export const MoreProfileOptions = () => {
               >
                 <path
                   fillRule="evenodd"
-                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                   clipRule="evenodd"
                 />
               </svg>
             </button>
-          </Link>
+
+            {/* Dropdown Menu */}
+            {isWorkspaceDropdownOpen && (
+              <div className="absolute top-12 left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                {workspaces.map((workspace) => (
+                  <div
+                    key={workspace.id}
+                    onClick={() => handleWorkspaceChange(workspace)}
+                    className="p-3 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+                  >
+                    <span>{workspace.name}</span>
+                    {workspace.id === activeWorkspace?.id && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-green-500"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Add New Workspace Button */}
+          <button
+            onClick={() => navigate('/Onboarding-phase-one')}
+            className="w-full h-[40px] bg-backgroundGreen text-white rounded-xl flex items-center justify-center gap-2"
+          >
+            <span>Add New Workspace</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
 
           {/* My Profile Button */}
           <button className="border rounded-xl bg-backgroundGreen text-white h-[40px] w-full">
@@ -382,9 +370,7 @@ export const MoreProfileOptions = () => {
 
           {/* Active Workspace Display */}
           <h1 className="text-center text-[18px] mt-2">
-            {activeWorkspace && activeWorkspace.name
-              ? `Active Workspace: ${activeWorkspace.name}`
-              : "No Workspace Selected"}
+            Active Workspace: {activeWorkspace?.name || 'Default Workspace'}
           </h1>
 
           {/* Logout Button */}

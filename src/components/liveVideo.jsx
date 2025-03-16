@@ -1,374 +1,378 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { connect, createLocalVideoTrack, createLocalAudioTrack } from "twilio-video";
-import { toast } from "react-toastify";
-import { FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaSignOutAlt, FaCog, FaEllipsisV } from "react-icons/fa";
+import React, { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
+import queryString from "query-string";
+import { toast } from "react-hot-toast";
+import { connect } from "twilio-video";
+import { FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash } from "react-icons/fa";
+import Lottie from "react-lottie";
+import NODATA from "../assets/meeting.json"; // Import your Lottie JSON file
+import notificationSound from "../assets/notification.mp3"; // Import the sound file
 
 export const LiveVideo = () => {
-  const [searchParams] = useSearchParams();
-  const roomName = searchParams.get("channelName");
-  const token = searchParams.get("token");
-  const participants = JSON.parse(searchParams.get("participants") || "[]");
-
-  const [localVideoTrack, setLocalVideoTrack] = useState(null);
-  const [localAudioTrack, setLocalAudioTrack] = useState(null);
+  const [room, setRoom] = useState(null);
+  const [localMedia, setLocalMedia] = useState(null);
   const [remoteParticipants, setRemoteParticipants] = useState([]);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
-  const [pinnedParticipant, setPinnedParticipant] = useState(null);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [availableDevices, setAvailableDevices] = useState({ video: [], audio: [] });
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const localVideoRef = useRef(null);
-  const roomRef = useRef(null);
+  const audioRef = useRef(new Audio(notificationSound)); // Reference to the audio file
 
-  // Join the room with Twilio Video
-  const joinRoom = async (roomName, userId) => {
-    try {
-      const accessToken = localStorage.getItem("access_token");
-
-      const response = await fetch("http://127.0.0.1:8000/generate_twilio_token/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ room_name: roomName, user_id: userId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate token.");
-      }
-
-      const data = await response.json();
-      const { token } = data;
-
-      if (roomRef.current) {
-        roomRef.current.disconnect();
-      }
-
-      const room = await connect(token, {
-        name: roomName,
-        audio: true,
-        video: true,
-      });
-
-      return room;
-    } catch (error) {
-      console.error("Failed to join the room:", error);
-      if (error.message.includes("duplicate identity")) {
-        toast.error("You are already in the meeting.");
-      } else {
-        toast.error("Failed to join the room. Please try again.");
-      }
-      return null;
-    }
+  // Lottie animation options
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: NODATA, // Your Lottie JSON file
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
   };
 
-  // Fetch available devices (microphones and cameras)
-  const getAvailableDevices = async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === "videoinput");
-      const audioDevices = devices.filter(device => device.kind === "audioinput");
-      setAvailableDevices({ video: videoDevices, audio: audioDevices });
-    } catch (error) {
-      console.error("Failed to fetch devices:", error);
-      toast.error("Failed to load available devices.");
-    }
-  };
+  // Parse URL parameters
+  const location = useLocation();
+  const { channelName, token, participants: participantsString } = queryString.parse(location.search);
 
-  // Toggle settings modal
-  const toggleSettingsModal = () => {
-    setIsSettingsModalOpen(!isSettingsModalOpen);
-  };
+  // Parse participants string into a JavaScript array
+  let participants;
+  try {
+    participants = JSON.parse(participantsString || "[]");
+    console.log("Parsed participants:", participants);
+  } catch (error) {
+    console.error("Failed to parse participants data:", error);
+    participants = [];
+  }
 
-  // Change video and audio devices
-  const changeDevice = async (deviceType, deviceId) => {
-    if (deviceType === "video") {
-      const videoTrack = await createLocalVideoTrack({ deviceId });
-      setLocalVideoTrack(videoTrack);
-      videoTrack.attach(localVideoRef.current);
-    } else if (deviceType === "audio") {
-      const audioTrack = await createLocalAudioTrack({ deviceId });
-      setLocalAudioTrack(audioTrack);
-    }
-  };
-
+  // Join the room
   useEffect(() => {
-    if (!token || !roomName) {
-      toast.error("Invalid or missing token or room name.");
+    const joinRoom = async () => {
+      try {
+        console.log("Attempting to join room with channelName:", channelName, "and token:", token);
+
+        // Validate required parameters
+        if (!channelName || !token) {
+          throw new Error("Missing channel name or token.");
+        }
+
+        console.log("Connecting to Twilio room:", channelName);
+
+        // Connect to the Twilio room
+        const room = await connect(token, {
+          name: channelName,
+          audio: true,
+          video: true,
+        });
+
+        console.log("Successfully connected to room:", room);
+
+        setRoom(room);
+
+        // Attach local video track
+        const localTrack = Array.from(room.localParticipant.videoTracks.values())[0]?.track;
+        console.log("Local track found:", localTrack);
+
+        if (localTrack && localVideoRef.current) {
+          const localMediaElement = localTrack.attach();
+          localVideoRef.current.appendChild(localMediaElement);
+          setLocalMedia(localMediaElement);
+          console.log("Attached local video track.");
+        } else {
+          console.error("No local video track found.");
+        }
+
+        // Handle remote participants
+        room.participants.forEach(participantConnected);
+        room.on("participantConnected", participantConnected);
+        room.on("participantDisconnected", participantDisconnected);
+      } catch (error) {
+        console.error("Error joining room:", error);
+        toast.error("Failed to join the meeting. Please check your connection and try again.");
+      }
+    };
+
+    if (channelName && token) {
+      console.log("Attempting to join room...");
+      joinRoom();
+    } else {
+      console.error("Channel name or token is missing.");
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (room) {
+        console.log("Disconnecting from the room...");
+        room.disconnect();
+      }
+    };
+  }, [channelName, token]);
+
+  // Handle participant connection
+  const participantConnected = (participant) => {
+    console.log("Participant connected:", participant.identity);
+
+    // Play the notification sound for 3 seconds
+    audioRef.current.play();
+    setTimeout(() => {
+      audioRef.current.pause(); // Stop the sound after 3 seconds
+      audioRef.current.currentTime = 0; // Reset the sound to the beginning
+    }, 2000);
+
+    // Add the participant to the remoteParticipants state
+    setRemoteParticipants((prev) => [
+      ...prev,
+      { participant, isMicMuted: false, isCameraOff: false },
+    ]);
+
+    // Handle existing tracks
+    participant.tracks.forEach((publication) => {
+      if (publication.isSubscribed) {
+        trackSubscribed(publication.track, participant.sid);
+      }
+    });
+
+    // Handle new tracks
+    participant.on("trackSubscribed", (track) => {
+      console.log("Track subscribed dynamically:", track);
+      trackSubscribed(track, participant.sid);
+    });
+
+    participant.on("trackUnsubscribed", (track) => {
+      console.log("Track unsubscribed:", track);
+      trackUnsubscribed(track, participant.sid);
+    });
+
+    // Listen for audio track updates
+    participant.on("trackEnabled", (track) => {
+      if (track.kind === "audio") {
+        setRemoteParticipants((prev) =>
+          prev.map((p) =>
+            p.participant.sid === participant.sid ? { ...p, isMicMuted: false } : p
+          )
+        );
+      }
+    });
+
+    participant.on("trackDisabled", (track) => {
+      if (track.kind === "audio") {
+        setRemoteParticipants((prev) =>
+          prev.map((p) =>
+            p.participant.sid === participant.sid ? { ...p, isMicMuted: true } : p
+          )
+        );
+      }
+    });
+
+    // Listen for video track updates
+    participant.on("trackEnabled", (track) => {
+      if (track.kind === "video") {
+        setRemoteParticipants((prev) =>
+          prev.map((p) =>
+            p.participant.sid === participant.sid ? { ...p, isCameraOff: false } : p
+          )
+        );
+      }
+    });
+
+    participant.on("trackDisabled", (track) => {
+      if (track.kind === "video") {
+        setRemoteParticipants((prev) =>
+          prev.map((p) =>
+            p.participant.sid === participant.sid ? { ...p, isCameraOff: true } : p
+          )
+        );
+      }
+    });
+  };
+
+  // Handle participant disconnection
+  const participantDisconnected = (participant) => {
+    console.log("Participant disconnected:", participant.identity);
+
+    // Remove all tracks for this participant
+    participant.tracks.forEach((publication) => {
+      if (publication.track) {
+        trackUnsubscribed(publication.track, participant.sid);
+      }
+    });
+
+    // Remove the participant from the remoteParticipants state
+    setRemoteParticipants((prev) => prev.filter((p) => p.participant.sid !== participant.sid));
+  };
+
+  // Handle track subscription
+  const trackSubscribed = (track, participantSid) => {
+    if (!track || typeof track.attach !== "function") {
+      console.error("Invalid track:", track);
       return;
     }
 
-    let localTracks = [];
+    console.log("Attaching track:", track);
 
-    const connectToRoom = async () => {
-      try {
-        const videoTrack = await createLocalVideoTrack().catch((error) => {
-          console.error("Failed to create local video track:", error);
-          toast.error("Failed to access camera. Please check permissions.");
-          throw error;
-        });
-        const audioTrack = await createLocalAudioTrack().catch((error) => {
-          console.error("Failed to create local audio track:", error);
-          toast.error("Failed to access microphone. Please check permissions.");
-          throw error;
-        });
-        localTracks = [videoTrack, audioTrack];
+    // Attach the track to the DOM
+    const containerId = `remote-track-${participantSid}-${track.kind}`;
+    const container = document.getElementById(containerId);
 
-        setLocalVideoTrack(videoTrack);
-        setLocalAudioTrack(audioTrack);
+    if (container) {
+      const trackElement = track.attach();
+      container.appendChild(trackElement);
+    } else {
+      console.error("Container not found for track:", containerId);
+    }
+  };
 
-        if (localVideoRef.current) {
-          videoTrack.attach(localVideoRef.current);
-        }
+  // Handle track unsubscription
+  const trackUnsubscribed = (track, participantSid) => {
+    console.log("Track unsubscribed:", track);
 
-        const room = await joinRoom(roomName, "unique-user-id-123");
-        if (!room) return;
+    // Detach and remove the track element
+    track.detach().forEach((element) => element.remove());
 
-        roomRef.current = room;
+    // Remove the container for the track
+    const containerId = `remote-track-${participantSid}-${track.kind}`;
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.remove();
+    }
+  };
 
-        const handleParticipantConnected = (participant) => {
-          setRemoteParticipants((prevParticipants) => [...prevParticipants, participant]);
-
-          const handleTrackSubscribed = (track) => {
-            if (track.kind === "video") {
-              const remoteVideoContainer = document.createElement("div");
-              remoteVideoContainer.id = `remote-video-${participant.sid}`;
-              remoteVideoContainer.classList.add("w-full", "h-full", "rounded-lg");
-              document.getElementById("remote-videos").appendChild(remoteVideoContainer);
-              track.attach(remoteVideoContainer);
-            }
-          };
-
-          const handleTrackUnsubscribed = (track) => {
-            if (track.kind === "video") {
-              const remoteVideoContainer = document.getElementById(`remote-video-${participant.sid}`);
-              if (remoteVideoContainer) {
-                remoteVideoContainer.remove();
-              }
-            }
-          };
-
-          participant.on("trackSubscribed", handleTrackSubscribed);
-          participant.on("trackUnsubscribed", handleTrackUnsubscribed);
-        };
-
-        const handleParticipantDisconnected = (participant) => {
-          setRemoteParticipants((prevParticipants) =>
-            prevParticipants.filter((p) => p !== participant)
-          );
-
-          const remoteVideoContainer = document.getElementById(`remote-video-${participant.sid}`);
-          if (remoteVideoContainer) {
-            remoteVideoContainer.remove();
-          }
-        };
-
-        room.on("participantConnected", handleParticipantConnected);
-        room.on("participantDisconnected", handleParticipantDisconnected);
-
-        room.on("disconnected", (room, error) => {
-          console.error("Room disconnected:", error);
-          toast.error("Disconnected from the room. Please try again.");
-          setTimeout(() => {
-            connectToRoom();
-          }, 5000);
-        });
-
-        return () => {
-          room.disconnect();
-          localTracks.forEach((track) => track.stop());
-          room.off("participantConnected", handleParticipantConnected);
-          room.off("participantDisconnected", handleParticipantDisconnected);
-        };
-      } catch (error) {
-        console.error("Failed to connect to the room:", error);
-        toast.error("Failed to connect to the room. Please check your network and try again.");
-      }
-    };
-
-    connectToRoom();
-    getAvailableDevices();
-
-    return () => {
-      if (roomRef.current) {
-        roomRef.current.disconnect();
-      }
-      localTracks.forEach((track) => track.stop());
-    };
-  }, [roomName, token]);
-
-  // Toggle microphone
+  // Toggle microphone mute/unmute
   const toggleMic = () => {
-    if (localAudioTrack) {
-      localAudioTrack.isEnabled ? localAudioTrack.disable() : localAudioTrack.enable();
-      setIsMicMuted(!localAudioTrack.isEnabled);
-    }
-  };
-
-  // Toggle camera
-  const toggleCamera = () => {
-    if (localVideoTrack) {
-      if (localVideoTrack.isEnabled) {
-        localVideoTrack.disable();
-        setIsCameraOff(true);
-      } else {
-        localVideoTrack.enable();
-        setIsCameraOff(false);
-        localVideoTrack.attach(localVideoRef.current);
+    if (room) {
+      const localAudioTrack = Array.from(room.localParticipant.audioTracks.values())[0]?.track;
+      if (localAudioTrack) {
+        localAudioTrack.isEnabled ? localAudioTrack.disable() : localAudioTrack.enable();
+        setIsMicMuted(!localAudioTrack.isEnabled);
       }
     }
   };
 
-  // End meeting
-  const endMeeting = () => {
-    if (roomRef.current) {
-      roomRef.current.disconnect();
-      toast.success("Meeting ended.");
-      window.location.href = "/";
+  // Toggle camera on/off
+  const toggleCamera = () => {
+    if (room) {
+      const localVideoTrack = Array.from(room.localParticipant.videoTracks.values())[0]?.track;
+      if (localVideoTrack) {
+        localVideoTrack.isEnabled ? localVideoTrack.disable() : localVideoTrack.enable();
+        setIsCameraOff(!localVideoTrack.isEnabled);
+      }
     }
   };
 
-  // Pin a participant's video
-  const pinParticipant = (participant) => {
-    setPinnedParticipant(participant === pinnedParticipant ? null : participant);
-  };
-
-  // Get grid layout based on number of participants
-  const getGridLayout = () => {
-    const totalParticipants = remoteParticipants.length + 1; // Include local participant
-    if (totalParticipants === 1) return "grid-cols-1";
-    if (totalParticipants === 2) return "grid-cols-2";
-    if (totalParticipants <= 4) return "grid-cols-2";
-    if (totalParticipants <= 6) return "grid-cols-3";
-    return "grid-cols-3";
-  };
-
-  // Render video grid
-  const renderVideoGrid = () => {
-    const totalParticipants = remoteParticipants.length + 1;
-    const participantsToShow = pinnedParticipant
-      ? [pinnedParticipant]
-      : remoteParticipants.slice(0, 6);
-
-    return (
-      <div className={`w-full grid ${getGridLayout()} gap-4 p-4`}>
-        {/* Local Video */}
-        {!pinnedParticipant && (
-          <div className="bg-gray-800 p-2 rounded-xl">
-            <h3 className="text-lg font-semibold text-center">You</h3>
-            <div
-              ref={localVideoRef}
-              className="w-full h-64 rounded-lg"
-            ></div>
-          </div>
-        )}
-
-        {/* Remote Videos */}
-        {participantsToShow.map((participant) => (
-          <div key={participant.sid} className="bg-gray-800 p-2 rounded-xl relative">
-            <h3 className="text-lg font-semibold text-center">{participant.identity}</h3>
-            <div
-              id={`remote-video-${participant.sid}`}
-              className="w-full h-64 rounded-lg"
-            ></div>
-            <div className="absolute top-2 right-2">
-              <button
-                onClick={() => pinParticipant(participant)}
-                className="text-white p-2 bg-black rounded-full"
-              >
-                <FaEllipsisV />
-              </button>
-              {pinnedParticipant === participant && (
-                <div className="absolute bg-black text-white p-2 rounded-lg mt-4 right-0">
-                  <button
-                    onClick={() => pinParticipant(participant)}
-                    className="block text-red-500"
-                  >
-                    Unpin
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+  // Handle leave meeting
+  const handleLeaveMeeting = () => {
+    if (room) {
+      room.disconnect();
+    }
+    window.close(); // Close the current window/tab
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-[#202124] text-white">
-      <h1 className="text-3xl font-semibold my-4">Live Meeting: {roomName}</h1>
-
-      <div className="w-full max-w-7xl">
-        {renderVideoGrid()}
+    <div className="flex flex-col h-screen bg-[#F0F4F8] text-gray-800">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 bg-[#1ED0C2]">
+        <h1 className="text-2xl font-bold text-white">Live Meeting</h1>
       </div>
 
-      <div className="fixed bottom-4 left-4 z-10 flex items-center gap-8">
+      {/* Video Grid */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 overflow-y-auto">
+        {/* Local Video */}
+        <div className="bg-white rounded-lg overflow-hidden aspect-video shadow-lg">
+          {isCameraOff ? (
+            <div className="flex items-center justify-center h-full bg-gray-100">
+              <Lottie options={defaultOptions} height={200} width={200} />
+            </div>
+          ) : (
+            <div ref={localVideoRef} className="w-full h-full"></div>
+          )}
+        </div>
+
+        {/* Remote Participants */}
+        {remoteParticipants.map(({ participant, isMicMuted, isCameraOff }) => (
+          <div key={participant.sid} className="bg-white rounded-lg overflow-hidden relative aspect-video shadow-lg">
+            {/* Microphone Status Icon */}
+            <div className="absolute top-2 right-2 bg-black bg-opacity-50 p-1 rounded-full">
+              {isMicMuted ? (
+                <FaMicrophoneSlash className="text-red-500" />
+              ) : (
+                <FaMicrophone className="text-[#1ED0C2]" />
+              )}
+            </div>
+
+            {/* Camera Status Icon */}
+            <div className="absolute top-2 left-2 bg-black bg-opacity-50 p-1 rounded-full">
+              {isCameraOff ? (
+                <FaVideoSlash className="text-red-500" />
+              ) : (
+                <FaVideo className="text-[#1ED0C2]" />
+              )}
+            </div>
+
+            {/* Video and Audio Tracks */}
+            {isCameraOff ? (
+              <div className="flex items-center justify-center h-full bg-gray-100">
+                <Lottie options={defaultOptions} height={200} width={200} />
+              </div>
+            ) : (
+              <div id={`remote-track-${participant.sid}-video`} className="w-full h-full"></div>
+            )}
+            <div id={`remote-track-${participant.sid}-audio`} className="w-full h-full"></div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer with Action Buttons */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#1ED0C2] p-4 flex justify-center gap-4">
+        {/* Mute/Unmute Button */}
         <button
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+            isMicMuted ? "bg-red-600" : "bg-white text-[#1ED0C2]"
+          }`}
           onClick={toggleMic}
-          className="p-4 text-white bg-blue-500 rounded-full text-3xl"
         >
           {isMicMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
+          {isMicMuted ? "Unmute Mic" : "Mute Mic"}
         </button>
+
+        {/* Camera On/Off Button */}
         <button
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+            isCameraOff ? "bg-red-600" : "bg-white text-[#1ED0C2]"
+          }`}
           onClick={toggleCamera}
-          className="p-4 text-white bg-blue-500 rounded-full text-3xl"
         >
           {isCameraOff ? <FaVideoSlash /> : <FaVideo />}
+          {isCameraOff ? "Turn On Camera" : "Turn Off Camera"}
         </button>
+
+        {/* Leave Meeting Button */}
         <button
-          onClick={endMeeting}
-          className="p-4 text-white bg-red-500 rounded-full text-3xl"
+          className="bg-white text-[#1ED0C2] px-4 py-2 rounded-lg"
+          onClick={() => setShowLeaveConfirmation(true)} // Show confirmation pop-up
         >
-          <FaSignOutAlt />
-        </button>
-        <button
-          onClick={toggleSettingsModal}
-          className="p-4 text-white bg-gray-500 rounded-full text-3xl"
-        >
-          <FaCog />
+          Leave Meeting
         </button>
       </div>
 
-      {isSettingsModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white text-black p-6 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Settings</h2>
-            <h3 className="font-semibold mb-2">Video Devices</h3>
-            <select
-              onChange={(e) => changeDevice("video", e.target.value)}
-              className="mb-4 p-2 rounded-lg w-full"
-            >
-              {availableDevices.video.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label}
-                </option>
-              ))}
-            </select>
-            <h3 className="font-semibold mb-2">Audio Devices</h3>
-            <select
-              onChange={(e) => changeDevice("audio", e.target.value)}
-              className="mb-4 p-2 rounded-lg w-full"
-            >
-              {availableDevices.audio.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={toggleSettingsModal}
-              className="p-2 bg-red-500 text-white rounded-lg w-full"
-            >
-              Close
-            </button>
+      {/* Confirmation Pop-up */}
+      {showLeaveConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg text-center shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Are you sure you want to leave the meeting?</h2>
+            <div className="flex justify-center gap-4">
+              <button
+                className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg"
+                onClick={handleLeaveMeeting} // Confirm leave
+              >
+                Confirm
+              </button>
+              <button
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+                onClick={() => setShowLeaveConfirmation(false)} // Cancel leave
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 };
-

@@ -2,8 +2,8 @@ import axios from "axios";
 import toast from "react-hot-toast"; // Import toast
 
 const api = axios.create({
-  baseURL: "https://territorial-georgine-pushprajmajhi-eb39e434.koyeb.app/",
-  // baseURL: "http://127.0.0.1:8000/",
+  // baseURL: "https://territorial-georgine-pushprajmajhi-eb39e434.koyeb.app/",
+  baseURL: "http://127.0.0.1:8000/",
   headers: {
     'Content-Type': 'application/json',
   },

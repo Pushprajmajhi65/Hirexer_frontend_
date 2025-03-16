@@ -69,6 +69,7 @@ export const OnBoardingOne = () => {
   );
 };
 
+
 export const OnBoardingTwo = () => {
   const [workspaceName, setWorkspaceName] = useState("");
   const [email, setEmail] = useState("");
@@ -208,12 +209,12 @@ export const OnBoardingTwo = () => {
     Create Workspace
   </button>
 
-  <Link
+  {/* <Link
     to="/overview"
     className="h-[40px] sm:h-[44px] md:h-[46px] lg:h-[48px] bg-white border rounded-2xl text-[12px] sm:text-[14px] md:text-[15px] lg:text-[16px] font-semibold flex justify-center items-center mt-2"
   >
     Skip
-  </Link>
+  </Link> */}
 </form>
           </div>
         </div>

@@ -188,7 +188,7 @@ export const MeetingUI = ({ connectToVideo }) => {
 
 
 
-const CreateMeetingForm = ({ connectToVideo }) => {
+export const CreateMeetingForm = ({ connectToVideo }) => {
   const [meetingName, setMeetingName] = useState("");
   const [members, setMembers] = useState([]);
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16)); // Set default to current date and time
@@ -335,35 +335,60 @@ const UpcomingMeetups = ({ meetings, connectToVideo, deleteMeeting }) => {
   const [meetingToDelete, setMeetingToDelete] = useState(null);
   const accessToken = localStorage.getItem("access_token");
 
-  const handleJoinMeeting = async (meeting) => {
-    try {
-      const response = await api.post("/join/", {
-        meeting_id: meeting.id,
-      });
-  
-      console.log("API Response:", response.data);  // Log the response
-  
-      if (!response.data.twilio_room_name) {
-        throw new Error("Meeting channel name is missing in the response.");
-      }
-  
-      const { twilio_room_name, twilio_token, participants } = response.data;
-  
-      // Construct the meeting URL
-      const url = `/live-video?channelName=${encodeURIComponent(
-        twilio_room_name
-      )}&token=${encodeURIComponent(twilio_token)}&participants=${encodeURIComponent(
-        JSON.stringify(participants)
-      )}`;
-  
-      // Open the meeting in a new window/tab
-      window.open(url, "_blank");
-    } catch (error) {
-      console.error("Error joining meeting:", error);  // Log the error
-      toast.error(error.message || "Failed to join meeting.");
-    }
-  };
 
+
+const handleJoinMeeting = async (meeting) => {
+  console.log("Step 1: Initiating join meeting process...");
+
+  try {
+    // Step 2: Make API call to join the meeting
+    console.log("Step 2: Making API request to join the meeting...");
+    const response = await api.post("/join/", {
+      meeting_id: meeting.id,
+    });
+    
+    console.log("API Response:", response.data); // Log the full response
+    
+    // Step 3: Validate API response
+    if (!response.data.twilio_room_name || !response.data.twilio_token) {
+      throw new Error("Error: Missing Twilio room name or token in the response.");
+    }
+    
+    const { twilio_room_name, twilio_token, participants: participantsString } = response.data;
+    console.log("Step 3: Extracted meeting details - Room Name:", twilio_room_name, "Token:", twilio_token);
+    
+    // Step 4: Parse participants data
+    let participants = [];
+    try {
+      console.log("Step 4: Parsing participants data...");
+      participants = JSON.parse(participantsString);
+      console.log("Parsed participants:", participants);
+    } catch (error) {
+      console.warn("Step 4: Failed to parse participants data. Defaulting to an empty array.");
+      participants = [];
+    }
+
+    // Step 5: Validate participants data
+    if (!Array.isArray(participants)) {
+      console.warn("Step 5: Invalid participants data format. Defaulting to an empty array.");
+      participants = [];
+    }
+
+    // Step 6: Construct the meeting URL
+    const url = `/live-video?channelName=${encodeURIComponent(twilio_room_name)}&token=${encodeURIComponent(twilio_token)}&participants=${encodeURIComponent(JSON.stringify(participants))}`;
+    console.log("Step 6: Constructed meeting URL:", url);
+    
+    // Step 7: Open the meeting in a new tab
+    console.log("Step 7: Opening the meeting URL in a new tab...");
+    window.open(url, "_blank");
+    console.log("Meeting opened successfully.");
+    
+  } catch (error) {
+    // Step 8: Handle any errors that occur during the process
+    console.error("Step 8: Error joining meeting:", error);
+    toast.error(error.message || "Failed to join the meeting.");
+  }
+};
   const handleDeleteMeeting = (meetingId) => {
     setMeetingToDelete(meetingId);
     setShowConfirmPopup(true);
