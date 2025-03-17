@@ -2,7 +2,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { NavBar } from "./UserOverview";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import useWorkspace from "./useWorkspace";
+import api from "@/api";
 
 import toast from "react-hot-toast";
 
@@ -256,29 +256,22 @@ const MyProfileCard = () => {
 
 
 
+import { useWorkspace } from "./WorkspaceContext";
+
+
 
 export const MoreProfileOptions = () => {
-  const navigate = useNavigate();
-  const { workspaces, activeWorkspace, switchWorkspace } = useWorkspace(); // Use the custom hook
-  const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
+  const { workspaces, selectedWorkspace, workspacesLoading, handleWorkspaceChange } = useWorkspace();
+  const navigate = useNavigate(); // Initialize the navigate function
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    toast.success('You have been logged out');
-    localStorage.removeItem('activeWorkspace'); 
-    navigate('/');
-  };
-
-  const handleWorkspaceChange = (workspace) => {
-    switchWorkspace(workspace); // Switch workspace using the custom hook
-    setIsWorkspaceDropdownOpen(false); // Close the dropdown
+  const handleAddWorkspace = () => {
+    navigate("/Onboarding-phase-one"); // Redirect to onboarding page
   };
 
   return (
     <Popover>
       <PopoverTrigger>
-        <div className="flex w-[158px] h-[44px] gap-2">
+        <div className="flex w-[158px] h-[44px] gap-2 cursor-pointer">
           <div className="border border-black rounded-full h-11 w-11"></div>
           <div>
             <h1 className="font-bold">John Doe</h1>
@@ -286,99 +279,55 @@ export const MoreProfileOptions = () => {
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[297px] py-4 px-6 flex flex-col items-center gap-2 max-h-[80vh] overflow-auto">
+
+      <PopoverContent className="w-[297px] py-4 px-6 flex flex-col items-center gap-2">
         <div className="flex flex-col items-center">
           <div className="h-[50px] w-[50px] rounded-full border border-black"></div>
-          <h1 className="text-xs text-textSecondary">Default Workspace</h1>
+          <h1 className="text-xs text-textSecondary">
+            {selectedWorkspace ? selectedWorkspace.name : "Workspace Name"}
+          </h1>
         </div>
+
         <div className="flex flex-col w-full gap-2">
-          {/* Custom Workspace Switcher */}
-          <div className="relative">
-            <button
-              onClick={() => setIsWorkspaceDropdownOpen(!isWorkspaceDropdownOpen)}
-              className="w-full h-[40px] bg-backgroundGreen text-white rounded-xl flex items-center justify-between px-4"
-            >
-              <span>{activeWorkspace?.name || 'Select a workspace'}</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+          {/* Handle Loading State */}
+          {workspacesLoading ? (
+            <p className="text-gray-500 text-center">Loading workspaces...</p>
+          ) : workspaces && workspaces.length > 0 ? (
+            // Workspace List
+            workspaces.map((workspace) => (
+              <button
+                key={workspace.id}
+                className={`flex items-center justify-between p-2 rounded-lg ${
+                  selectedWorkspace?.id === workspace.id
+                    ? "bg-backgroundGreen text-white"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+                onClick={() => handleWorkspaceChange(workspace)}
               >
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-
-            {/* Dropdown Menu */}
-            {isWorkspaceDropdownOpen && (
-              <div className="absolute top-12 left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                {workspaces.map((workspace) => (
-                  <div
-                    key={workspace.id}
-                    onClick={() => handleWorkspaceChange(workspace)}
-                    className="p-3 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
-                  >
-                    <span>{workspace.name}</span>
-                    {workspace.id === activeWorkspace?.id && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-green-500"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Add New Workspace Button */}
-          <button
-            onClick={() => navigate('/Onboarding-phase-one')}
-            className="w-full h-[40px] bg-backgroundGreen text-white rounded-xl flex items-center justify-center gap-2"
-          >
-            <span>Add New Workspace</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
+                <span>{workspace.name}</span>
+                {selectedWorkspace?.id === workspace.id && <span>✔️</span>}
+              </button>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center">No workspaces available</p>
+          )}
 
           {/* My Profile Button */}
           <button className="border rounded-xl bg-backgroundGreen text-white h-[40px] w-full">
             My Profile
           </button>
 
-          {/* Active Workspace Display */}
-          <h1 className="text-center text-[18px] mt-2">
-            Active Workspace: {activeWorkspace?.name || 'Default Workspace'}
-          </h1>
-
           {/* Logout Button */}
-          <button
-            onClick={logout}
-            className="border rounded-xl border-colorRed text-colorRed h-[40px] w-full"
-          >
+          <button className="border rounded-xl border-colorRed text-colorRed h-[40px] w-full">
             Logout
+          </button>
+
+          {/* Add New Workspace Button */}
+          <button
+            className="border rounded-xl bg-backgroundGreen text-white h-[40px] w-full"
+            onClick={handleAddWorkspace}
+          >
+            Add new workspace
           </button>
         </div>
       </PopoverContent>

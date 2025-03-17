@@ -16,16 +16,26 @@ import { FeedUI } from "./components/feed";
 import { Employee } from "./components/employee";
 import { MyProfile } from "./components/profile";
 import { LiveVideo } from "./components/liveVideo";
+import { WorkspaceProvider } from "./components/WorkspaceContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+import  Applications  from "./components/application";
+import MyApplications from "./components/MyApplications";
 
 
-import { Applications } from "./components/application";
 
+
+import { Import } from "lucide-react";
+
+const queryClient = new QueryClient();
 function App() {
   const navigate = useNavigate();
   const location = useLocation(); // Use useLocation to access location.state
 
 
   return (
+    <QueryClientProvider client={queryClient}>
+    <WorkspaceProvider>
     <Routes>
       {/* Main routes */}
       <Route path="/" element={<LoginPage />} />
@@ -43,8 +53,14 @@ function App() {
       <Route path="/profile" element={<MyProfile />} />
       <Route path="/application" element={<Applications />} />
       <Route path="/live-video" element={<LiveVideo />} />
+      
       <Route path="/meeting" element={<MeetingUI />} />
+      <Route path="/applications" element={<MyApplications />} />
+    
+     
     </Routes>
+    </WorkspaceProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -71,11 +71,7 @@ export const LoginPage = () => {
   return (
     <div className="flex items-center justify-center w-screen h-screen font-poppins">
       <div className="w-[90%] max-w-[512px] xl:max-w-[1098px] h-[500px] xl:h-[741px] bg-white rounded-2xl flex flex-col items-center justify-center relative p-4 xl:p-0">
-        <img
-          src={letterSend}
-          className="absolute top-[570px] left-[300px] z-50 w-0 xl:w-[250px]"
-          alt="Letter decoration"
-        />
+        
 
         <div className="w-full xl:w-[1002px] h-auto xl:h-[645px] bg-white flex xl:flex-row">
           <div className="w-full xl:w-[512px] h-auto xl:h-[645px] flex flex-col justify-center items-center">

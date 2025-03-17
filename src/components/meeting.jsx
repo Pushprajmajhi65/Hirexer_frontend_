@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "@/api";
+
 import { toast } from "react-hot-toast";
 import { NavBar, SmallScreenNavBar } from "./UserOverview";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -11,32 +11,36 @@ import orangeMeeting from "../images/Commonimg/meeting_orange.png";
 import ChatTab from "./ChatTab";
 import Lottie from 'react-lottie';
 import NODATA from "../assets/NODATA.json";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faVideo, faCalendarAlt, faUsers } from "@fortawesome/free-solid-svg-icons";
+import "react-datepicker/dist/react-datepicker.css"; 
+import DatePicker from "react-datepicker";
 
+
+
+import { useWorkspace } from "./WorkspaceContext"; // Import the hook
+import { useQuery } from "@tanstack/react-query";
+import api from "@/api";
 
 export const MeetingUI = ({ connectToVideo }) => {
-  const [meetings, setMeetings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showNavBar, setShowNavBar] = useState(false);
+  const { selectedWorkspace } = useWorkspace(); // Use the hook
   const [activeTab, setActiveTab] = useState("upcoming");
 
-  const toggleNavBar = () => setShowNavBar((prev) => !prev);
+  const {
+    data: meetings,
+    isLoading: meetingsLoading,
+    error: meetingsError,
+  } = useQuery({
+    queryKey: ["meetings", selectedWorkspace?.id],
+    queryFn: async () => {
+      const response = await api.get("/user-meetings/");
+      return response.data;
+    },
+    enabled: !!selectedWorkspace,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const response = await api.get("/user-meetings/");
-        setMeetings(response.data);
-      } catch (err) {
-        setError("Failed to fetch meetings");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMeetings();
-  }, []);
-
-  const filteredMeetings = meetings.filter((meeting) => {
+  const filteredMeetings = meetings?.filter((meeting) => {
     const now = new Date();
     const startTime = new Date(meeting.start_time);
     const endTime = new Date(meeting.end_time);
@@ -46,41 +50,32 @@ export const MeetingUI = ({ connectToVideo }) => {
         return startTime > now;
       case "past":
         return endTime < now;
-      case "archived":
-        return meeting.isArchived;
       default:
         return true;
     }
   });
 
-  if (error) return <div>{error}</div>;
+
+  if (meetingsError) return <div>{meetingsError.message}</div>;
 
   return (
     <div className="flex w-full h-full bg-backgroundGray">
       {/* Sidebar */}
       <NavBar />
-      {showNavBar && (
-        <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
-          <SmallScreenNavBar />
-        </div>
-      )}
-
+  
       {/* Main Content */}
-      <div className="flex flex-col flex-1 p-4 md:p-6 overflow-y-auto">
+      <div className="flex flex-col flex-1 p-4 md:p-6 overflow-y-auto max-w-[1128px] mx-auto w-full">
         {/* Header with Navbar Toggle and Buttons */}
         <div className="flex justify-between items-center mb-4">
-          <button className="xl:hidden" onClick={toggleNavBar}>
-            <img src={navicon} className="w-6 h-6" />
-          </button>
           <h1 className="text-2xl font-bold">Meetups</h1>
           <MoreProfileOptions />
         </div>
-
+  
         {/* Buttons for Create and Join Meetup */}
         <div className="flex flex-wrap md:flex-nowrap justify-between items-center mb-4 gap-2">
           <div className="ml-auto">
             <Dialog>
-              <DialogTrigger>
+              <DialogTrigger asChild>
                 <button className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg shadow-md w-full md:w-auto">
                   Create new meeting
                 </button>
@@ -91,10 +86,10 @@ export const MeetingUI = ({ connectToVideo }) => {
             </Dialog>
           </div>
         </div>
-
+  
         {/* Tabs */}
         <div className="flex space-x-4 mb-4 overflow-x-auto">
-          {["upcoming", "past", "archived", "chat"].map((tab) => (
+          {["upcoming", "past", "chat"].map((tab) => (
             <button
               key={tab}
               className={`text-muted-foreground border-b-2 whitespace-nowrap px-4 py-2 ${
@@ -106,54 +101,34 @@ export const MeetingUI = ({ connectToVideo }) => {
             </button>
           ))}
         </div>
-
+  
         {/* Meetup Cards or Loading Skeleton */}
         <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)]">
-          {loading ? (
+          {meetingsLoading ? (
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-4 bg-gray-200 rounded-xl animate-pulse">
-                <div>
-                  <div className="flex items-center">
-                    <div className="w-[46px] h-[42px] bg-gray-300 rounded-full"></div>
-                    <div className="ml-2 w-32 h-4 bg-gray-300 rounded"></div>
+              {/* Loading Skeleton */}
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-center p-4 bg-gray-200 rounded-xl animate-pulse"
+                >
+                  <div>
+                    <div className="flex items-center">
+                      <div className="w-[46px] h-[42px] bg-gray-300 rounded-full"></div>
+                      <div className="ml-2 w-32 h-4 bg-gray-300 rounded"></div>
+                    </div>
+                    <div className="mt-2 w-48 h-4 bg-gray-300 rounded"></div>
                   </div>
-                  <div className="mt-2 w-48 h-4 bg-gray-300 rounded"></div>
-                </div>
-                <div className="flex justify-center space-x-2">
-                  <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
-                  <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
-                </div>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-gray-200 rounded-xl animate-pulse">
-                <div>
-                  <div className="flex items-center">
-                    <div className="w-[46px] h-[42px] bg-gray-300 rounded-full"></div>
-                    <div className="ml-2 w-32 h-4 bg-gray-300 rounded"></div>
+                  <div className="flex justify-center space-x-2">
+                    <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
+                    <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
                   </div>
-                  <div className="mt-2 w-48 h-4 bg-gray-300 rounded"></div>
                 </div>
-                <div className="flex justify-center space-x-2">
-                  <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
-                  <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
-                </div>
-              </div>
-              <div className="flex justify-between items-center p-4 bg-gray-200 rounded-xl animate-pulse">
-                <div>
-                  <div className="flex items-center">
-                    <div className="w-[46px] h-[42px] bg-gray-300 rounded-full"></div>
-                    <div className="ml-2 w-32 h-4 bg-gray-300 rounded"></div>
-                  </div>
-                  <div className="mt-2 w-48 h-4 bg-gray-300 rounded"></div>
-                </div>
-                <div className="flex justify-center space-x-2">
-                  <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
-                  <button className="bg-gray-300 text-white w-[120px] h-[48px] rounded-lg animate-pulse"></button>
-                </div>
-              </div>
+              ))}
             </div>
           ) : (
             <>
-              {filteredMeetings.length === 0 ? (
+              {filteredMeetings?.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Lottie
                     animationData={NODATA}
@@ -172,7 +147,6 @@ export const MeetingUI = ({ connectToVideo }) => {
                     />
                   )}
                   {activeTab === "past" && <PastMeetups meetings={filteredMeetings} />}
-                  {activeTab === "archived" && <ArchivedMeetups meetings={filteredMeetings} />}
                   {activeTab === "chat" && <ChatTab />}
                 </>
               )}
@@ -181,8 +155,7 @@ export const MeetingUI = ({ connectToVideo }) => {
         </div>
       </div>
     </div>
-  );
-};
+  );}
 
 
 
@@ -191,8 +164,10 @@ export const MeetingUI = ({ connectToVideo }) => {
 export const CreateMeetingForm = ({ connectToVideo }) => {
   const [meetingName, setMeetingName] = useState("");
   const [members, setMembers] = useState([]);
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 16)); // Set default to current date and time
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(null); // For the start date
+  const [startTime, setStartTime] = useState(null); // For the start time
+  const [endDate, setEndDate] = useState(null); // For the end date
+  const [endTime, setEndTime] = useState(null); // For the end time
   const [loading, setLoading] = useState(false);
 
   // Handle adding new member
@@ -208,32 +183,29 @@ export const CreateMeetingForm = ({ connectToVideo }) => {
       toast.error("Meetup name can't be empty.");
       return;
     }
-    if (!startDate || !endDate) {
+    if (!startDate || !startTime || !endDate || !endTime) {
       toast.error("Start and End times are required.");
       return;
     }
 
-    // Ensure start date is greater than current date
-    const currentTime = new Date();
-    const startTime = new Date(startDate);
-    if (startTime <= currentTime) {
-      toast.error("Start date must be in the future.");
-      return;
-    }
+    // Combine date and time for start and end
+    const startDateTime = new Date(
+      `${startDate.toISOString().split("T")[0]}T${startTime}:00`
+    );
+    const endDateTime = new Date(
+      `${endDate.toISOString().split("T")[0]}T${endTime}:00`
+    );
 
     setLoading(true);
     try {
       const response = await api.post("/create/", {
         title: meetingName,
-        start_time: startTime.toISOString(),
-        end_time: new Date(endDate).toISOString(),
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
         invited_members: members.map((member) => member.email),
       });
 
-      console.log("API response:", response); // Log the response to verify its structure
-
       if (response.status === 200 || response.status === 201) {
-        // Show the success message from the backend
         toast.success(response.data.message);
         connectToVideo(response.data.agora_channel_name);
       } else {
@@ -251,62 +223,85 @@ export const CreateMeetingForm = ({ connectToVideo }) => {
       <h1 className="font-medium text-[24px]">Create a Meetup</h1>
       <div className="flex flex-col gap-4">
         {/* Meetup Name Input */}
-        <input
-          type="text"
-          placeholder="Enter meetup name"
-          value={meetingName}
-          onChange={(e) => setMeetingName(e.target.value)}
-          className="w-full p-2 border rounded-lg"
-        />
+        <fieldset className="border-2 rounded-md">
+          <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+            Meetup Name:
+          </legend>
+          <input
+            type="text"
+            placeholder="Enter meetup name"
+            value={meetingName}
+            onChange={(e) => setMeetingName(e.target.value)}
+            className="w-[97%] h-[31px] text-[16px] outline-none mb-2 ml-2"
+          />
+        </fieldset>
 
-        {/* Start Date Input */}
-        <input
-          type="datetime-local"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-full p-2 border rounded-lg"
-        />
+        {/* Start Date and Time Input */}
+        <fieldset className="border-2 rounded-md">
+          <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+            Start Date and Time:
+          </legend>
+          <div className="flex gap-2 p-2">
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              placeholderText="Select start date"
+              className="w-full p-2 border rounded-lg"
+            />
+            <DatePicker
+              selected={startTime}
+              onChange={(time) => setStartTime(time)}
+              showTimeSelect
+              showTimeSelectOnly
+              timeIntervals={15}
+              dateFormat="h:mm aa"
+              placeholderText="Select start time"
+              className="w-full p-2 border rounded-lg"
+            />
+          </div>
+        </fieldset>
 
-        {/* End Date Input */}
-        <input
-          type="datetime-local"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="w-full p-2 border rounded-lg"
-        />
+        {/* End Date and Time Input */}
+        <fieldset className="border-2 rounded-md">
+          <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+            End Date and Time:
+          </legend>
+          <div className="flex gap-2 p-2">
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              placeholderText="Select end date"
+              className="w-full p-2 border rounded-lg"
+            />
+            <DatePicker
+              selected={endTime}
+              onChange={(time) => setEndTime(time)}
+              showTimeSelect
+              showTimeSelectOnly
+              timeIntervals={15}
+              dateFormat="h:mm aa"
+              placeholderText="Select end time"
+              className="w-full p-2 border rounded-lg"
+            />
+          </div>
+        </fieldset>
 
-        {/* Dynamic Member Email Fields */}
-        <input
-          type="text"
-          placeholder="Enter member email"
-          onKeyPress={(e) => {
-            if (e.key === "Enter") {
-              handleAddMember(e.target.value);
-              e.target.value = "";
-            }
-          }}
-          className="w-full p-2 border rounded-lg"
-        />
-
-        {/* Displaying added members */}
-        <div className="flex flex-col gap-2">
-          {members.map((member) => (
-            <MembersCard key={member.id} member={member} removeMember={() => handleRemoveMember(member.id)} />
-          ))}
-        </div>
+        {/* Create Meetup Button */}
+        <button
+          className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg"
+          onClick={handleCreateMeeting}
+          disabled={loading}
+        >
+          {loading ? "Creating..." : "Create Meetup"}
+        </button>
       </div>
-
-      {/* Create Meetup Button */}
-      <button
-        className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg"
-        onClick={handleCreateMeeting}
-        disabled={loading}
-      >
-        {loading ? "Creating..." : "Create Meetup"}
-      </button>
     </div>
   );
 };
+
+
+  
+
 
 // Handle removing a member
 const handleRemoveMember = (memberId) => {
@@ -337,58 +332,36 @@ const UpcomingMeetups = ({ meetings, connectToVideo, deleteMeeting }) => {
 
 
 
-const handleJoinMeeting = async (meeting) => {
-  console.log("Step 1: Initiating join meeting process...");
-
-  try {
-    // Step 2: Make API call to join the meeting
-    console.log("Step 2: Making API request to join the meeting...");
-    const response = await api.post("/join/", {
-      meeting_id: meeting.id,
-    });
-    
-    console.log("API Response:", response.data); // Log the full response
-    
-    // Step 3: Validate API response
-    if (!response.data.twilio_room_name || !response.data.twilio_token) {
-      throw new Error("Error: Missing Twilio room name or token in the response.");
-    }
-    
-    const { twilio_room_name, twilio_token, participants: participantsString } = response.data;
-    console.log("Step 3: Extracted meeting details - Room Name:", twilio_room_name, "Token:", twilio_token);
-    
-    // Step 4: Parse participants data
-    let participants = [];
+  const handleJoinMeeting = async (meeting) => {
     try {
-      console.log("Step 4: Parsing participants data...");
-      participants = JSON.parse(participantsString);
-      console.log("Parsed participants:", participants);
+      const response = await api.post("/join/", {
+        meeting_id: meeting.id,
+      });
+  
+      if (!response.data.twilio_room_name || !response.data.twilio_token) {
+        throw new Error("Invalid response from the server.");
+      }
+  
+      const { twilio_room_name, twilio_token, participants: participantsString } = response.data;
+  
+      // Parse participants data
+      let participants = [];
+      try {
+        participants = JSON.parse(participantsString);
+      } catch (error) {
+        console.warn("Failed to parse participants data. Defaulting to an empty array.");
+      }
+  
+      // Construct the meeting URL
+      const url = `/live-video?channelName=${encodeURIComponent(twilio_room_name)}&token=${encodeURIComponent(twilio_token)}&participants=${encodeURIComponent(JSON.stringify(participants))}`;
+  
+      // Open the meeting in a new tab
+      window.open(url, "_blank");
     } catch (error) {
-      console.warn("Step 4: Failed to parse participants data. Defaulting to an empty array.");
-      participants = [];
+      console.error("Error joining meeting:", error);
+      toast.error(error.message || "Failed to join the meeting.");
     }
-
-    // Step 5: Validate participants data
-    if (!Array.isArray(participants)) {
-      console.warn("Step 5: Invalid participants data format. Defaulting to an empty array.");
-      participants = [];
-    }
-
-    // Step 6: Construct the meeting URL
-    const url = `/live-video?channelName=${encodeURIComponent(twilio_room_name)}&token=${encodeURIComponent(twilio_token)}&participants=${encodeURIComponent(JSON.stringify(participants))}`;
-    console.log("Step 6: Constructed meeting URL:", url);
-    
-    // Step 7: Open the meeting in a new tab
-    console.log("Step 7: Opening the meeting URL in a new tab...");
-    window.open(url, "_blank");
-    console.log("Meeting opened successfully.");
-    
-  } catch (error) {
-    // Step 8: Handle any errors that occur during the process
-    console.error("Step 8: Error joining meeting:", error);
-    toast.error(error.message || "Failed to join the meeting.");
-  }
-};
+  };
   const handleDeleteMeeting = (meetingId) => {
     setMeetingToDelete(meetingId);
     setShowConfirmPopup(true);
@@ -408,9 +381,10 @@ const handleJoinMeeting = async (meeting) => {
     setShowConfirmPopup(false);
   };
 
-  const sortedMeetings = meetingsList.sort(
-    (a, b) => new Date(a.start_time) - new Date(b.start_time)
-  );
+    // Ensure meetingsList is an array before sorting
+    const sortedMeetings = meetingsList && Array.isArray(meetingsList)
+    ? meetingsList.sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+    : [];
 
   return (
     <div className="space-y-4">
@@ -419,23 +393,26 @@ const handleJoinMeeting = async (meeting) => {
           key={meeting.id}
           className="flex justify-between items-center p-4 bg-[#FFFFFF] rounded-xl shadow-md"
         >
-          <div>
+
             <div className="flex items-center">
-              <img src={orangeMeeting} className="w-[46px] h-[42px]" />
-              <span className="font-semibold ml-2">{meeting.title}</span>
+              <FontAwesomeIcon icon={faCalendarAlt} className="w-[46px] h-[42px] text-[#1ED0C2] mr-3" />
+              
+              <div className="flex flex-col">
+                <span className="font-semibold">{meeting.title}</span>
+                <span className="text-muted-foreground">
+                  {new Date(meeting.start_time).toLocaleString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </span>
+              </div>
             </div>
-            <span className="text-muted-foreground">
-              {new Date(meeting.start_time).toLocaleString("en-US", {
-                weekday: "short",
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
-            </span>
-          </div>
+
           <div className="flex justify-center space-x-2">
             <button
               className="bg-[#1ED0C2] text-white w-[120px] h-[48px] rounded-lg"
@@ -482,28 +459,116 @@ const handleJoinMeeting = async (meeting) => {
     </div>
   );
 };
+const PastMeetups = ({ meetings, deleteMeeting }) => {
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [meetingToDelete, setMeetingToDelete] = useState(null);
 
-const PastMeetups = ({ meetings }) => (
-  <div className="space-y-4">
-    {meetings.map((meeting) => (
-      <div
-        key={meeting.id}
-        className="flex justify-between p-4 bg-white rounded-xl shadow-md"
-      >
-        <div>
-          <div className="flex items-center">
-            <img src={dateIcon} className="h-[38px] w-[38px]" />
-            <span className="font-semibold ml-2">{meeting.title}</span>
-          </div>
-          <span className="text-muted-foreground">
-            {new Date(meeting.start_time).toLocaleString()}
-          </span>
+  // Filter past meetings (ended at least one day before the current date)
+  const pastMeetings = meetings.filter((meeting) => {
+    const now = new Date();
+    const endTime = new Date(meeting.end_time);
+    const oneDayBefore = new Date(now);
+    oneDayBefore.setDate(now.getDate() - 1); // Subtract one day from the current date
+    return endTime < oneDayBefore;
+  });
+
+  const handleDeleteMeeting = (meetingId) => {
+    setMeetingToDelete(meetingId);
+    setShowConfirmPopup(true);
+  };
+
+  const confirmDelete = () => {
+    deleteMeeting(meetingToDelete).then((response) => {
+      if (response.success) {
+        // Remove the deleted meeting from the list
+        setShowConfirmPopup(false); // Close the confirmation popup
+      }
+    });
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmPopup(false);
+  };
+
+  return (
+    <div className="space-y-4">
+      {pastMeetings.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-full">
+          <Lottie
+            animationData={NODATA}
+            loop={true}
+            style={{ width: 300, height: 300 }}
+          />
+          <p className="text-muted-foreground mt-4">No past meetings found.</p>
         </div>
-        <img src={options} className="w-6 h-6" />
-      </div>
-    ))}
-  </div>
-);
+      ) : (
+        pastMeetings.map((meeting) => (
+          <div
+            key={meeting.id}
+            className="flex justify-between items-center p-4 bg-[#FFFFFF] rounded-xl shadow-md"
+          >
+            <div className="flex items-center">
+              <FontAwesomeIcon
+                icon={faCalendarAlt}
+                className="w-[46px] h-[42px] text-[#1ED0C2] mr-3"
+              />
+              <div className="flex flex-col">
+                <span className="font-semibold">{meeting.title}</span>
+                <span className="text-muted-foreground">
+                  {new Date(meeting.start_time).toLocaleString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-center space-x-2">
+              <button
+                className="bg-[#FF4D4D] text-white w-[120px] h-[48px] rounded-lg"
+                onClick={() => handleDeleteMeeting(meeting.id)}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+
+      {showConfirmPopup && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-xl shadow-md w-80">
+            <h3 className="text-lg font-semibold">
+              Are you sure you want to delete this meeting?
+            </h3>
+            <p className="mt-2 text-sm text-gray-500">
+              You won't be able to recover this meeting once deleted.
+            </p>
+            <div className="mt-4 flex justify-between">
+              <button
+                className="bg-gray-300 text-black w-32 py-2 rounded-lg"
+                onClick={cancelDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-red-600 text-white w-32 py-2 rounded-lg"
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 const fetchUserId = async () => {
   try {
@@ -538,8 +603,7 @@ const ArchivedMeetups = ({ meetings }) => (
     ))}
   </div>
 );
-
-const MembersCard = ({ member }) => (
+const MembersCard = ({ member, removeMember }) => (
   <div className="flex gap-[14px] items-center">
     <div className="w-[25px] h-[25px] border rounded-full"></div>
     <div className="gap-2">
@@ -547,6 +611,12 @@ const MembersCard = ({ member }) => (
         {member.email}
       </h1>
     </div>
+    <button
+      className="text-red-500 text-sm"
+      onClick={() => removeMember(member.id)}
+    >
+      Remove
+    </button>
   </div>
 );
 

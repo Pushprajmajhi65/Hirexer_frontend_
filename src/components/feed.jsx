@@ -10,13 +10,16 @@ import { MoreProfileOptions } from "./profile";
 import navicon from "../images/Commonimg/navicon.png";
 import toast from "react-hot-toast";
 import api from "@/api";
+import { useWorkspace } from "./WorkspaceContext";
 
-// Main FeedUI component
+
+
 export const FeedUI = () => {
   const [showNavBar, setShowNavBar] = useState(false);
-  const [posts, setPosts] = useState([]); // State to hold posts data
-  const [loading, setLoading] = useState(true); // State to handle loading state
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+  const { selectedWorkspace } = useWorkspace(); // Use selected workspace from context
 
   const toggleNavBar = () => {
     setShowNavBar((prev) => !prev);
@@ -26,73 +29,72 @@ export const FeedUI = () => {
     setIsCreatePostOpen((prev) => !prev);
   };
 
-  // Fetching posts from the API
+  // Fetch posts for the selected workspace
   useEffect(() => {
     const fetchPosts = async () => {
+      if (!selectedWorkspace) return; // Don't fetch if no workspace is selected
+
       try {
-        const response = await api.get("/posts/");
-        setPosts(response.data); // Set posts data
+        const response = await api.get(`/posts/?workspace=${selectedWorkspace.id}`);
+        setPosts(response.data);
       } catch (err) {
         console.error("Failed to fetch posts:", err);
         toast.error("Failed to fetch posts");
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        setLoading(false);
       }
     };
 
     fetchPosts();
-  }, []); // Run effect once on mount
+  }, [selectedWorkspace]); // Re-fetch when workspace changes
 
   const addNewPost = (newPost) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
-
   return (
     <div className="flex w-full h-full gap-8 bg-backgroundGray max-sm:px-0 px-[40px] pb-[80px] justify-center xl:justify-start xl:p-0">
-    <NavBar />
-    {showNavBar ? (
-      <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
-        <SmallScreenNavBar />
-      </div>
-    ) : null}
-    <div className="flex flex-col w-full xl:w-[1100px] h-full gap-6 px-[40px] pb-[80px] xl:p-0">
-      <div className="w-full h-[92px] flex items-center justify-end gap-[10px]">
-        <button className="mr-auto xl:hidden" onClick={toggleNavBar}>
-          <img src={navicon} className="w-6 h-6" alt="Menu" />
-        </button>
-        <div className="flex items-center gap-2 p-3">
-          <MoreProfileOptions />
-          <img src={notifaction} className="w-5 h-5" alt="Notification" />
-          <img src={settting} className="w-5 h-5" alt="Settings" />
+      <NavBar />
+      {showNavBar ? (
+        <div className="fixed z-20 w-full h-full border" onClick={toggleNavBar}>
+          <SmallScreenNavBar />
         </div>
-      </div>
-      <div className="flex flex-row gap-6 max-xl:flex-wrap">
-        <div className="flex flex-col gap-6">
-          <h1 className="text-[32px] font-semibold text-textPrimary">My Feeds</h1>
-          <button
-            className="bg-blue-500 text-white w-[140px] h-[48px] p-2 rounded-md ml-auto"
-            onClick={toggleCreatePostPopup}
-          >
-            Create Post
+      ) : null}
+      <div className="flex flex-col w-full xl:w-[1100px] h-full gap-6 px-[40px] pb-[80px] xl:p-0">
+        <div className="w-full h-[92px] flex items-center justify-end gap-[10px]">
+          <button className="mr-auto xl:hidden" onClick={toggleNavBar}>
+            <img src={navicon} className="w-6 h-6" alt="Menu" />
           </button>
-          {loading ? (
-            // Show skeleton loader for feed cards while loading
-            [...Array(4)].map((_, index) => <FeedCardSkeleton key={index} />)
-          ) : (
-            // Show actual feed cards after loading
-            posts.map((post, index) => <FeedCard key={index} post={post} />)
-          )}
+          <div className="flex items-center gap-2 p-3">
+            <MoreProfileOptions />
+           
+          </div>
+        </div>
+        <div className="flex flex-row gap-6 max-xl:flex-wrap">
+          <div className="flex flex-col gap-6">
+            <h1 className="text-[32px] font-semibold text-textPrimary">My Feeds</h1>
+            <button
+              className="bg-blue-500 text-white w-[140px] h-[48px] p-2 rounded-md ml-auto"
+              onClick={toggleCreatePostPopup}
+            >
+              Create Post
+            </button>
+            {loading ? (
+              [...Array(4)].map((_, index) => <FeedCardSkeleton key={index} />)
+            ) : (
+              posts.map((post, index) => <FeedCard key={index} post={post} />)
+            )}
+          </div>
         </div>
       </div>
+      <CreatePostPopup
+        isOpen={isCreatePostOpen}
+        onClose={toggleCreatePostPopup}
+        onPostCreated={addNewPost}
+        workspaceId={selectedWorkspace?.id} // Pass workspaceId to CreatePostPopup
+      />
     </div>
-    <CreatePostPopup
-      isOpen={isCreatePostOpen}
-      onClose={toggleCreatePostPopup}
-      onPostCreated={addNewPost}
-    />
-  </div>
-);
+  );
 };
 
 
@@ -208,70 +210,40 @@ const FeedCard = ({ post }) => {
 
 
 
-const CreatePostPopup = ({ isOpen, onClose, onPostCreated }) => {
+const CreatePostPopup = ({ isOpen, onClose, onPostCreated, workspaceId }) => {
   const [title, setTitle] = useState("");
   const [postDescription, setPostDescription] = useState("");
-  const [experience, setExperience] = useState(""); // For the 'experience' field
-  const [postType, setPostType] = useState(""); // For the 'post_type' field
-  const [image, setImage] = useState(null); // For image upload
+  const [experience, setExperience] = useState("");
+  const [postType, setPostType] = useState("");
+  const [image, setImage] = useState(null);
   const [error, setError] = useState("");
 
   const handlePost = async () => {
-    setError("");
-  
-    // Validate input fields
-    if (!title.trim()) {
-      setError("Post title cannot be empty");
+    if (!workspaceId) {
+      setError("No workspace selected");
       return;
     }
-  
-    if (!postDescription.trim()) {
-      setError("Post description cannot be empty");
-      return;
-    }
-  
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setError("You are not authorized. Please log in.");
-      return;
-    }
-  
+
     const formData = new FormData();
-    formData.append("workspace", 4); // Static value, update if needed
+    formData.append("workspace", workspaceId); // Use the selected workspace ID
     formData.append("title", title);
     formData.append("post_description", postDescription);
     formData.append("experience", experience);
     formData.append("post_type", postType);
-    
-    if (image) {
-      formData.append("image", image); // Add the file as well
-    }
-  
+    if (image) formData.append("image", image);
+
     try {
       const response = await api.post("/posts/create/", formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          // 'Content-Type' is not required when using FormData
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       });
-  
-      if (!response.data) {
-        throw new Error("Failed to create post");
-      }
-  
-      const newPost = response.data;
-      setTitle("");
-      setPostDescription("");
-      setExperience("");
-      setPostType("");
-      setImage(null);
-  
-      onPostCreated(newPost);
+      onPostCreated(response.data);
       onClose();
       toast.success("Post created successfully!");
     } catch (err) {
       console.error("Error creating post:", err);
-      setError(err.message || "An error occurred while creating the post.");
+      setError(err.message || "Failed to create post");
       toast.error("Failed to create post");
     }
   };
@@ -356,64 +328,29 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }) => {
 const ApplyJobPopup = ({ isOpen, onClose, post, onApplicationSubmitted }) => {
   const [email, setEmail] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
-  const [cv, setCv] = useState(null); // For file upload (optional)
+  const [cv, setCv] = useState(null);
   const [error, setError] = useState("");
 
   const handleApply = async () => {
-    setError("");
-
-    // Validate input fields
-    if (!email.trim()) {
-      setError("Email cannot be empty");
-      return;
-    }
-
-    if (!experienceLevel.trim()) {
-      setError("Experience level cannot be empty");
-      return;
-    }
-
-    // No need to validate cv as it's optional
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setError("You are not authorized. Please log in.");
-      return;
-    }
-
     const formData = new FormData();
-    formData.append("post", post.id); // ID of the post you're applying to
-    formData.append("user", post.user_id); // Assuming you have the user's ID from the post details
+    formData.append("post", post.id);
+    formData.append("workspace", post.workspace); // Use the workspace ID from the post
     formData.append("email", email);
     formData.append("experience_level", experienceLevel);
-
-    // Append cv to formData if it's available
-    if (cv) {
-      formData.append("cv", cv);
-    }
+    if (cv) formData.append("cv", cv);
 
     try {
       const response = await api.post("/applications/apply/", formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       });
-
-      if (!response.data) {
-        throw new Error("Failed to submit application");
-      }
-
-      // Reset form fields and close popup
-      setEmail("");
-      setExperienceLevel("");
-      setCv(null);
-
-      // Notify parent component
       onApplicationSubmitted(response.data);
       onClose();
       toast.success("Application submitted successfully!");
     } catch (err) {
       console.error("Error applying for post:", err);
-      setError(err.message || "An error occurred while submitting the application.");
+      setError(err.message || "Failed to apply for post");
       toast.error("Failed to apply for post");
     }
   };

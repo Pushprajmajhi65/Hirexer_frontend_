@@ -51,7 +51,7 @@ export const SignUpPage = () => {
     }
   
     try {
-      const response = await api.post("/auth/register/", {
+      const response = await api.post("/register/", {
         username: userName,
         email,
         password,

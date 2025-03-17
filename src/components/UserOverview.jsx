@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import notifaction from "../images/mainScreen/notifaction.png";
 import settting from "../images/mainScreen/settings.png";
 import logo from "../images/logo.png";
@@ -5,26 +6,88 @@ import overview from "../images/Commonimg/overview.png";
 import feed from "../images/Commonimg/feed.png";
 import meeting from "../images/Commonimg/meeting.png";
 import weather from "../images/Commonimg/weather.png";
+import navicon from "../images/Commonimg/navicon.png"; // Add this line
+
 import { Link } from "react-router-dom";
-import { useState } from "react";
-import navicon from "../images/Commonimg/navicon.png";
 import { MoreProfileOptions } from "./profile";
 import EmployeeTable, { ManageEmployeeCard } from "./employee";
-
-
-
+import { FaChartPie, FaNewspaper, FaUsers, FaUserTie, FaClipboardList, FaCalendarAlt } from "react-icons/fa";
 
 export const UserOverviewUI = () => {
   const [showNavBar, setShowNavBar] = useState(false);
-  // const [searchQuery, setSearchQuery] = useState("");
+  const [weatherData, setWeatherData] = useState({ temperature: null, icon: null });
+  const [location, setLocation] = useState('Kathmandu');
 
   const toggleNavBar = () => {
     setShowNavBar((prev) => !prev);
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = now.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+    const day = now.toLocaleDateString([], { weekday: 'long' });
+    return `${time} ${date} ${day}`;
+  };
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      const apiKey = 'b26e36966f597cdc7258c5b6dd7202d1';
+      const city = location;
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        setWeatherData({
+          temperature: Math.round(data.main.temp),
+          icon: `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+        });
+      } catch (error) {
+        console.error('Failed to fetch weather data:', error);
+      }
+    };
+
+    fetchWeather();
+  }, [location]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          fetchLocationName(latitude, longitude);
+        },
+        (error) => {
+          console.error('Error fetching location:', error);
+        }
+      );
+    }
+  }, []);
+
+  const fetchLocationName = async (latitude, longitude) => {
+    const apiKey = 'b26e36966f597cdc7258c5b6dd7202d1';
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      setLocation(data.name);
+    } catch (error) {
+      console.error('Failed to fetch location:', error);
+    }
+  };
   return (
     <div className="flex w-full h-full gap-8 bg-backgroundGray px-5 max-sm:px-5 pb-[80px] justify-center xl:justify-start xl:p-0">
       <NavBar />
+  
       {/* Overlay and Sidebar for Mobile */}
       {showNavBar && (
         <>
@@ -42,44 +105,42 @@ export const UserOverviewUI = () => {
           </div>
         </>
       )}
-       <div className="flex flex-col w-full lg:w-[1100px] h-full gap-6 sm:px-2 px-[40px] sm:pb-0 pb-[80px] xl:px-0 xl:p-0">
+  
+      <div className="flex flex-col w-full max-w-[1100px] h-full gap-6 sm:px-2 px-[40px] sm:pb-0 pb-[80px] xl:px-0 xl:p-0">
         <div className="w-full h-[92px] flex items-center justify-end gap-[10px]">
           <button className="mr-auto xl:hidden" onClick={toggleNavBar}>
-            {/* Toggle between menu icon and close icon */}
             <img
-              src={showNavBar ? closeIcon : navicon}
+              src={showNavBar ? closeIcon : navicon} // Use the imported navicon and closeIcon
               className="w-6 h-6"
               alt={showNavBar ? "Close Menu" : "Open Menu"}
             />
           </button>
           <div className="flex items-center gap-2 p-3">
             <MoreProfileOptions />
-            <img src={notifaction} className="w-5 h-5" alt="Notification" />
-            <img src={settting} className="w-5 h-5" alt="Settings" />
           </div>
         </div>
-
+  
         {/* Welcome Section */}
         <div className="h-auto md:h-[131px] w-full bg-backgroundGreen rounded-xl p-6 flex flex-col md:flex-row">
           <h1 className="text-[30px] font-semibold text-textPrimary">
-            Good Morning,
+            {getGreeting()},
             <br />
-            Pushpraj 
+            Pushpraj
           </h1>
           <div className="md:ml-auto w-[214px] h-full p-4 flex flex-col items-center justify-center gap-2">
             <div className="flex items-center gap-8">
-              <h1 className="text-[36px] font-semibold">16</h1>
-              <img src={weather} className="w-[66px] h-[53px]" />
+              <h1 className="text-[36px] font-semibold">{weatherData.temperature}°C</h1>
+              {weatherData.icon && <img src={weatherData.icon} className="w-[66px] h-[53px]" alt="Weather" />}
             </div>
             <h2 className="text-xs font-semibold">
-              16:09 30th Sep Monday  
-              <h2 className="w-full text-xs font-semibold text-end">
-                Kathmandu
-              </h2>
+              {getCurrentDateTime()}
             </h2>
+            <span className="w-full text-xs font-semibold text-end">
+              {location}
+            </span>
           </div>
         </div>
-
+  
         {/* Upcoming Meetings */}
         <div className="flex flex-col w-full gap-6 xl:flex-row">
           <div className="flex flex-col gap-6 w-full">
@@ -89,102 +150,74 @@ export const UserOverviewUI = () => {
             <UpcomingMeetingCard />
           </div>
         </div>
-
+  
         <ManageEmployeeCard />
       </div>
     </div>
   );
-};
-export const NavBar = () => {
-  return (
-    <div className="hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 xl:flex flex-col gap-[70px] sticky top-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <img src={logo} className="w-[50px] h-[44px]" alt="Logo" />
-      <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
-        <Link
-          to="/overview"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={overview} className="w-5 h-5" alt="Overview" />
-          Overview
-        </Link>
-        <Link
-          to="/feed"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={feed} className="w-5 h-5" alt="Feed" />
-          Feed
-        </Link>
-        <Link
-          to="/meeting"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={meeting} className="w-5 h-5" alt="Meetings" />
-          Meetings
-        </Link>
-        <Link
-          to="/employee"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={meeting} className="w-5 h-5" alt="Employees" />
-          Employees
-        </Link>
-        <Link
-          to="/application"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={meeting} className="w-5 h-5" alt="Application" />
-          Application
-        </Link>
-      </div>
-    </div>
-  );
-};
 
 
-export const SmallScreenNavBar = () => {
-  return (
-    <div className="flex flex-col gap-[70px]">
-      <img src={logo} className="w-[50px] h-[44px]" alt="Logo" />
-      <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
-        <Link
-          to="/overview"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={overview} className="w-5 h-5" alt="Overview" />
-          Overview
-        </Link>
-        <Link
-          to="/feed"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={feed} className="w-5 h-5" alt="Feed" />
-          Feed
-        </Link>
-        <Link
-          to="/meeting"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={meeting} className="w-5 h-5" alt="Meetings" />
-          Meetings
-        </Link>
-        <Link
-          to="/employee"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={meeting} className="w-5 h-5" alt="Employees" />
-          Employees
-        </Link>
-        <Link
-          to="/application"
-          className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300"
-        >
-          <img src={meeting} className="w-5 h-5" alt="Application" />
-          Application
-        </Link>
+}
+
+
+
+  export const NavBar = () => {
+    return (
+      <div className="hidden w-[248px] h-screen bg-white rounded-r-lg px-6 py-8 xl:flex flex-col gap-[70px] sticky top-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <img src={logo} className="w-[50px] h-[44px]" alt="Logo" />
+        <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
+          <Link to="/overview" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaChartPie className="w-5 h-5" /> Overview
+          </Link>
+          <Link to="/feed" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaNewspaper className="w-5 h-5" /> Feed
+          </Link>
+          <Link to="/meeting" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaCalendarAlt className="w-5 h-5" /> Meetings
+          </Link>
+          <Link to="/employee" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaUsers className="w-5 h-5" /> Employees
+          </Link>
+          <Link to="/application" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaClipboardList className="w-5 h-5" /> Application
+          </Link>
+          <Link to="/applications" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaUserTie className="w-5 h-5" /> My Application
+          </Link>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
+  
+  export const SmallScreenNavBar = () => {
+    return (
+      <div className="flex flex-col gap-[70px]">
+        <FaChartPie className="text-4xl text-gray-700" />
+        <div className="flex flex-col gap-4 text-[16px] font-normal text-textPrimary">
+          <Link to="/overview" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaChartPie className="w-5 h-5" /> Overview
+          </Link>
+          <Link to="/feed" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaNewspaper className="w-5 h-5" /> Feed
+          </Link>
+          <Link to="/meeting" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaCalendarAlt className="w-5 h-5" /> Meetings
+          </Link>
+          <Link to="/employee" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaUsers className="w-5 h-5" /> Employees
+          </Link>
+          <Link to="/application" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaClipboardList className="w-5 h-5" /> Application
+          </Link>
+          <Link to="/applications" className="flex gap-2 hover:bg-backgroundGreen hover:border-l-[3px] hover:border-borderGreen h-[46px] items-center px-2 py-[10px] rounded-e-xl transition-all duration-300">
+            <FaUserTie className="w-5 h-5" /> My Application
+          </Link>
+        </div>
+      </div>
+    );
+  };
+
+
 
 export const FriendRequestTab = () => {
   return (
