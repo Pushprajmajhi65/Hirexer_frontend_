@@ -20,77 +20,63 @@ export const WorkspaceProvider = ({ children }) => {
       const response = await api.get("/api/workspaces/");
       return response.data;
     },
-    staleTime: 1000 * 60 * 5, // Cache workspaces for 5 minutes
   });
 
   // State for selected workspace
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
 
-  // State for applications
-  const [applications, setApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null);
+  // Automatically set the first workspace as default after fetching
+  useEffect(() => {
+    if (workspaces?.length && !selectedWorkspace) {
+      setSelectedWorkspace(workspaces[0]);
+      toast.info(`Default workspace set to ${workspaces[0].name}`);
+    }
+  }, [workspaces, selectedWorkspace]);
 
-  // Fetch applications for the selected workspace
+  // Fetch posts based on the selected workspace
   const {
-    data: fetchedApplications,
-    isLoading: applicationsLoading,
-    error: applicationsError,
-    refetch: refetchApplications,
+    data: currentUserPosts,
+    isLoading: postsLoading,
+    error: postsError,
+    refetch: refetchPosts,
   } = useQuery({
-    queryKey: ["applications", selectedWorkspace?.id],
+    queryKey: ["workspacePosts", selectedWorkspace?.id],
     queryFn: async () => {
-      if (!selectedWorkspace) return [];
-      const response = await api.get(`/workspaces/${selectedWorkspace.id}/applications/`);
+      if (!selectedWorkspace) {
+        throw new Error("No workspace selected.");
+      }
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+
+      const response = await api.get(`/workspaces/${selectedWorkspace.id}/posts/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       return response.data;
     },
-    enabled: !!selectedWorkspace, // Only fetch if a workspace is selected
-    staleTime: 1000 * 60 * 5, // Cache applications for 5 minutes
+    enabled: !!selectedWorkspace, 
   });
-
-  // Update applications state when fetchedApplications changes
-  useEffect(() => {
-    if (fetchedApplications) {
-      setApplications(fetchedApplications);
-    }
-  }, [fetchedApplications]);
 
   // Handle workspace change
   const handleWorkspaceChange = (workspace) => {
     setSelectedWorkspace(workspace);
     toast.success(`Workspace changed to ${workspace.name}`);
+    refetchPosts(); // Refetch posts when the workspace changes
   };
-
-  // Handle application status update
-  const updateApplicationStatus = useMutation({
-    mutationFn: async ({ applicationId, newStatus }) => {
-      const response = await api.post(`/applications/${applicationId}/status/`, {
-        status: newStatus,
-      });
-      return response.data;
-    },
-    onSuccess: (data) => {
-      // Update the local applications state
-      setApplications((prevApplications) =>
-        prevApplications.map((app) =>
-          app.id === data.id ? { ...app, application_status: data.application_status } : app
-        )
-      );
-      toast.success("Application status updated successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to update application status.");
-    },
-  });
 
   // Handle errors
   useEffect(() => {
     if (workspacesError) {
       toast.error("Failed to fetch workspaces. Please try again.");
     }
-    if (applicationsError) {
-      toast.error("Failed to fetch applications. Please try again.");
+    if (postsError) {
+      toast.error("Failed to fetch posts. Please try again.");
     }
-  }, [workspacesError, applicationsError]);
+  }, [workspacesError, postsError]);
 
   return (
     <WorkspaceContext.Provider
@@ -101,13 +87,11 @@ export const WorkspaceProvider = ({ children }) => {
         workspacesLoading,
         handleWorkspaceChange,
 
-        // Application-related values
-        applications,
-        selectedApplication,
-        applicationsLoading,
-        setSelectedApplication,
-        updateApplicationStatus,
-        refetchApplications,
+        // Current user posts
+        currentUserPosts,
+        postsLoading,
+        postsError,
+        refetchPosts,
       }}
     >
       {children}
@@ -115,4 +99,4 @@ export const WorkspaceProvider = ({ children }) => {
   );
 };
 
-export const useWorkspace = () => useContext(WorkspaceContext); // Export the hook
+export const useWorkspace = () => useContext(WorkspaceContext);

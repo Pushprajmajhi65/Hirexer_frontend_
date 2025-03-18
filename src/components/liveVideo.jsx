@@ -71,9 +71,10 @@ export const LiveVideo = () => {
         console.log("Local track found:", localTrack);
 
         if (localTrack && localVideoRef.current) {
-          const localMediaElement = localTrack.attach();
-          localVideoRef.current.appendChild(localMediaElement);
-          setLocalMedia(localMediaElement);
+          const videoElement = localTrack.attach();
+          localVideoRef.current.innerHTML = ""; // Clear any existing content
+          localVideoRef.current.appendChild(videoElement);
+          setLocalMedia(videoElement);
           console.log("Attached local video track.");
         } else {
           console.error("No local video track found.");
@@ -213,6 +214,7 @@ export const LiveVideo = () => {
 
     if (container) {
       const trackElement = track.attach();
+      container.innerHTML = ""; // Clear any existing content
       container.appendChild(trackElement);
     } else {
       console.error("Container not found for track:", containerId);
@@ -272,9 +274,9 @@ export const LiveVideo = () => {
       </div>
 
       {/* Video Grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 overflow-y-auto">
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 overflow-y-auto">
         {/* Local Video */}
-        <div className="bg-white rounded-lg overflow-hidden aspect-video shadow-lg">
+        <div className="bg-white rounded-lg overflow-hidden aspect-video shadow-lg relative">
           {isCameraOff ? (
             <div className="flex items-center justify-center h-full bg-gray-100">
               <Lottie options={defaultOptions} height={200} width={200} />
@@ -282,6 +284,14 @@ export const LiveVideo = () => {
           ) : (
             <div ref={localVideoRef} className="w-full h-full"></div>
           )}
+          {/* Microphone Status Icon */}
+          <div className="absolute top-2 right-2 bg-black bg-opacity-50 p-1 rounded-full">
+            {isMicMuted ? (
+              <FaMicrophoneSlash className="text-red-500" />
+            ) : (
+              <FaMicrophone className="text-[#1ED0C2]" />
+            )}
+          </div>
         </div>
 
         {/* Remote Participants */}
@@ -322,8 +332,8 @@ export const LiveVideo = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-[#1ED0C2] p-4 flex justify-center gap-4">
         {/* Mute/Unmute Button */}
         <button
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-            isMicMuted ? "bg-red-600" : "bg-white text-[#1ED0C2]"
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+            isMicMuted ? "bg-red-600 text-white" : "bg-white text-[#1ED0C2] hover:bg-gray-100"
           }`}
           onClick={toggleMic}
         >
@@ -333,8 +343,8 @@ export const LiveVideo = () => {
 
         {/* Camera On/Off Button */}
         <button
-          className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
-            isCameraOff ? "bg-red-600" : "bg-white text-[#1ED0C2]"
+          className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+            isCameraOff ? "bg-red-600 text-white" : "bg-white text-[#1ED0C2] hover:bg-gray-100"
           }`}
           onClick={toggleCamera}
         >
@@ -344,7 +354,7 @@ export const LiveVideo = () => {
 
         {/* Leave Meeting Button */}
         <button
-          className="bg-white text-[#1ED0C2] px-4 py-2 rounded-lg"
+          className="bg-white text-[#1ED0C2] px-4 py-2 rounded-lg hover:bg-gray-100 transition-all"
           onClick={() => setShowLeaveConfirmation(true)} // Show confirmation pop-up
         >
           Leave Meeting
@@ -354,17 +364,17 @@ export const LiveVideo = () => {
       {/* Confirmation Pop-up */}
       {showLeaveConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg text-center shadow-lg">
+          <div className="bg-white p-6 rounded-lg text-center shadow-lg max-w-sm w-full">
             <h2 className="text-xl font-bold mb-4">Are you sure you want to leave the meeting?</h2>
             <div className="flex justify-center gap-4">
               <button
-                className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg"
+                className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg hover:bg-[#1AB9AD] transition-all"
                 onClick={handleLeaveMeeting} // Confirm leave
               >
                 Confirm
               </button>
               <button
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition-all"
                 onClick={() => setShowLeaveConfirmation(false)} // Cancel leave
               >
                 Cancel

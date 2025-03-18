@@ -9,8 +9,8 @@ import dateIcon from "../images/Commonimg/PastMeetings.png";
 import options from "../images/Commonimg/options.png";
 import orangeMeeting from "../images/Commonimg/meeting_orange.png";
 import ChatTab from "./ChatTab";
-import Lottie from 'react-lottie';
-import NODATA from "../assets/NODATA.json";
+import Lottie from 'lottie-react';
+import NODATA from "../assets/nodata.json";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVideo, faCalendarAlt, faUsers } from "@fortawesome/free-solid-svg-icons";
 import "react-datepicker/dist/react-datepicker.css"; 
@@ -22,8 +22,13 @@ import { useWorkspace } from "./WorkspaceContext"; // Import the hook
 import { useQuery } from "@tanstack/react-query";
 import api from "@/api";
 
+
+
+
+
+
 export const MeetingUI = ({ connectToVideo }) => {
-  const { selectedWorkspace } = useWorkspace(); // Use the hook
+  const { selectedWorkspace } = useWorkspace();
   const [activeTab, setActiveTab] = useState("upcoming");
 
   const {
@@ -34,27 +39,21 @@ export const MeetingUI = ({ connectToVideo }) => {
     queryKey: ["meetings", selectedWorkspace?.id],
     queryFn: async () => {
       const response = await api.get("/user-meetings/");
+      console.log("API Response:", response.data);
       return response.data;
     },
     enabled: !!selectedWorkspace,
-    staleTime: 1000 * 60 * 5,
   });
 
-  const filteredMeetings = meetings?.filter((meeting) => {
-    const now = new Date();
-    const startTime = new Date(meeting.start_time);
+  const nowUTC = new Date(new Date().toISOString());
+
+  const pastMeetings = meetings?.filter((meeting) => {
     const endTime = new Date(meeting.end_time);
+    return endTime < nowUTC;
+  }) || [];
 
-    switch (activeTab) {
-      case "upcoming":
-        return startTime > now;
-      case "past":
-        return endTime < now;
-      default:
-        return true;
-    }
-  });
-
+  console.log("Past Meetings:", pastMeetings);
+  console.log("Active Tab:", activeTab);
 
   if (meetingsError) return <div>{meetingsError.message}</div>;
 
@@ -62,7 +61,7 @@ export const MeetingUI = ({ connectToVideo }) => {
     <div className="flex w-full h-full bg-backgroundGray">
       {/* Sidebar */}
       <NavBar />
-  
+
       {/* Main Content */}
       <div className="flex flex-col flex-1 p-4 md:p-6 overflow-y-auto max-w-[1128px] mx-auto w-full">
         {/* Header with Navbar Toggle and Buttons */}
@@ -70,7 +69,7 @@ export const MeetingUI = ({ connectToVideo }) => {
           <h1 className="text-2xl font-bold">Meetups</h1>
           <MoreProfileOptions />
         </div>
-  
+
         {/* Buttons for Create and Join Meetup */}
         <div className="flex flex-wrap md:flex-nowrap justify-between items-center mb-4 gap-2">
           <div className="ml-auto">
@@ -86,7 +85,7 @@ export const MeetingUI = ({ connectToVideo }) => {
             </Dialog>
           </div>
         </div>
-  
+
         {/* Tabs */}
         <div className="flex space-x-4 mb-4 overflow-x-auto">
           {["upcoming", "past", "chat"].map((tab) => (
@@ -101,7 +100,7 @@ export const MeetingUI = ({ connectToVideo }) => {
             </button>
           ))}
         </div>
-  
+
         {/* Meetup Cards or Loading Skeleton */}
         <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-150px)]">
           {meetingsLoading ? (
@@ -128,7 +127,7 @@ export const MeetingUI = ({ connectToVideo }) => {
             </div>
           ) : (
             <>
-              {filteredMeetings?.length === 0 ? (
+              {!meetings || meetings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Lottie
                     animationData={NODATA}
@@ -141,12 +140,12 @@ export const MeetingUI = ({ connectToVideo }) => {
                 <>
                   {activeTab === "upcoming" && (
                     <UpcomingMeetups
-                      meetings={filteredMeetings}
+                      meetings={meetings}
                       connectToVideo={connectToVideo}
                       deleteMeeting={deleteMeeting}
                     />
                   )}
-                  {activeTab === "past" && <PastMeetups meetings={filteredMeetings} />}
+                  {activeTab === "past" && <PastMeetups meetings={pastMeetings} />}
                   {activeTab === "chat" && <ChatTab />}
                 </>
               )}
@@ -155,25 +154,25 @@ export const MeetingUI = ({ connectToVideo }) => {
         </div>
       </div>
     </div>
-  );}
+  );
+};
 
-
-
-
+  
+  
 
 export const CreateMeetingForm = ({ connectToVideo }) => {
   const [meetingName, setMeetingName] = useState("");
   const [members, setMembers] = useState([]);
-  const [startDate, setStartDate] = useState(null); // For the start date
-  const [startTime, setStartTime] = useState(null); // For the start time
-  const [endDate, setEndDate] = useState(null); // For the end date
-  const [endTime, setEndTime] = useState(null); // For the end time
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // Handle adding new member
-  const handleAddMember = (email) => {
-    if (email.trim()) {
-      setMembers([...members, { id: Date.now(), email }]);
+  const handleAddMember = () => {
+    if (newMemberEmail.trim()) {
+      setMembers([...members, { id: Date.now(), email: newMemberEmail }]);
+      setNewMemberEmail("");
     }
   };
 
@@ -183,36 +182,29 @@ export const CreateMeetingForm = ({ connectToVideo }) => {
       toast.error("Meetup name can't be empty.");
       return;
     }
-    if (!startDate || !startTime || !endDate || !endTime) {
-      toast.error("Start and End times are required.");
+    if (!startDate || !endDate) {
+      toast.error("Start and End dates are required.");
       return;
     }
-
-    // Combine date and time for start and end
-    const startDateTime = new Date(
-      `${startDate.toISOString().split("T")[0]}T${startTime}:00`
-    );
-    const endDateTime = new Date(
-      `${endDate.toISOString().split("T")[0]}T${endTime}:00`
-    );
 
     setLoading(true);
     try {
       const response = await api.post("/create/", {
         title: meetingName,
-        start_time: startDateTime.toISOString(),
-        end_time: endDateTime.toISOString(),
+        start_time: startDate.toISOString(), // Send only the date
+        end_time: endDate.toISOString(), // Send only the date
         invited_members: members.map((member) => member.email),
       });
 
       if (response.status === 200 || response.status === 201) {
         toast.success(response.data.message);
-        connectToVideo(response.data.agora_channel_name);
+        connectToVideo(response.data.twilio_room_name);
       } else {
         toast.error("Unexpected response from the server.");
       }
     } catch (err) {
       toast.error("Error creating meeting.");
+      console.error(err); // Log the error for debugging
     } finally {
       setLoading(false);
     }
@@ -236,53 +228,73 @@ export const CreateMeetingForm = ({ connectToVideo }) => {
           />
         </fieldset>
 
-        {/* Start Date and Time Input */}
+        {/* Start Date Input */}
         <fieldset className="border-2 rounded-md">
           <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
-            Start Date and Time:
+            Start Date:
           </legend>
-          <div className="flex gap-2 p-2">
+          <div className="p-2">
             <DatePicker
               selected={startDate}
               onChange={(date) => setStartDate(date)}
               placeholderText="Select start date"
               className="w-full p-2 border rounded-lg"
             />
-            <DatePicker
-              selected={startTime}
-              onChange={(time) => setStartTime(time)}
-              showTimeSelect
-              showTimeSelectOnly
-              timeIntervals={15}
-              dateFormat="h:mm aa"
-              placeholderText="Select start time"
-              className="w-full p-2 border rounded-lg"
-            />
           </div>
         </fieldset>
 
-        {/* End Date and Time Input */}
+        {/* End Date Input */}
         <fieldset className="border-2 rounded-md">
           <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
-            End Date and Time:
+            End Date:
           </legend>
-          <div className="flex gap-2 p-2">
+          <div className="p-2">
             <DatePicker
               selected={endDate}
               onChange={(date) => setEndDate(date)}
               placeholderText="Select end date"
               className="w-full p-2 border rounded-lg"
             />
-            <DatePicker
-              selected={endTime}
-              onChange={(time) => setEndTime(time)}
-              showTimeSelect
-              showTimeSelectOnly
-              timeIntervals={15}
-              dateFormat="h:mm aa"
-              placeholderText="Select end time"
+          </div>
+        </fieldset>
+
+        {/* Add Members Input */}
+        <fieldset className="border-2 rounded-md">
+          <legend className="text-sm ml-4 p-2 text-[12px] text-textPrimary">
+            Add Members:
+          </legend>
+          <div className="flex gap-2 p-2">
+            <input
+              type="email"
+              placeholder="Enter member email"
+              value={newMemberEmail}
+              onChange={(e) => setNewMemberEmail(e.target.value)}
               className="w-full p-2 border rounded-lg"
             />
+            <button
+              className="bg-[#1ED0C2] text-white px-4 py-2 rounded-lg"
+              onClick={handleAddMember}
+            >
+              Add
+            </button>
+          </div>
+          <div className="p-2">
+            {members.map((member) => (
+              <div
+                key={member.id}
+                className="flex justify-between items-center p-2 border-b"
+              >
+                <span>{member.email}</span>
+                <button
+                  className="text-red-500"
+                  onClick={() =>
+                    setMembers(members.filter((m) => m.id !== member.id))
+                  }
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
           </div>
         </fieldset>
 
@@ -298,8 +310,6 @@ export const CreateMeetingForm = ({ connectToVideo }) => {
     </div>
   );
 };
-
-
   
 
 
