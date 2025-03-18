@@ -10,7 +10,8 @@ import options from "../images/Commonimg/options.png";
 import orangeMeeting from "../images/Commonimg/meeting_orange.png";
 import ChatTab from "./ChatTab";
 import Lottie from 'lottie-react';
-import NODATA from "../assets/nodata.json";
+import NODATA from "../assets/NODATA.json";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVideo, faCalendarAlt, faUsers } from "@fortawesome/free-solid-svg-icons";
 import "react-datepicker/dist/react-datepicker.css"; 

@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/api";
 import { format } from "date-fns"; // Replace with date-fns for date formatting
 import { toast } from "react-toastify";
+
 export const Applications = () => {
   const [selectedPost, setSelectedPost] = useState(null);
 
