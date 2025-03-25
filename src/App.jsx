@@ -1,67 +1,174 @@
-import { Route, Routes, useNavigate, useLocation } from "react-router-dom";
-import { SignUpPage } from "./components/SignUp";
-import { LoginPage } from "./components/Login";
-import { PasswordReset } from "./components/passwordReset";
-import { NewPasswordSet } from "./components/NewPassword";
-import { PasswordResetSuccess } from "./components/succesfulReset";
-import {
-  OnBoardingFour,
-  OnBoardingOne,
-  OnBoardingThree,
-  OnBoardingTwo,
-} from "./components/onboarding";
-import { UserOverviewUI } from "./components/UserOverview";
-import { MeetingUI } from "./components/meeting";
-import { FeedUI } from "./components/feed";
-import { Employee } from "./components/employee";
-import { MyProfile } from "./components/profile";
-import { LiveVideo } from "./components/liveVideo";
-import { WorkspaceProvider } from "./components/WorkspaceContext";
+import React, { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
+import Layout from "./components/shared/Layout";
+import ScrollToTop from "./components/shared/ScrollToTop";
+import Loader from "./components/shared/Loader";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { PublicRoute } from "./components/auth/PublicRoute";
+import { AuthProvider } from "./context/AuthContext";
+const SuccessfulPasswordReset = lazy(() =>
+  import("./pages/SuccessfulPasswordReset")
+);
+const PageNotFound = lazy(() => import("./pages/PageNotFound"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const OTP = lazy(() => import("./pages/SignupOTP"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NewPassword = lazy(() => import("./pages/NewPassword"));
+const ResetPasswordOTP = lazy(() => import("./pages/ResetPasswordOTP"));
+const Overview = lazy(() => import("./pages/Overview"));
+const WorkSpaceSetupDone = lazy(() => import("./pages/WorkspaceSetupdone"));
+const CreateWorkspace = lazy(() => import("./pages/CreateWorkspace"));
+const OnBoarding = lazy(() => import("./pages/OnBoarding"));
+const WorkspaceInvitation = lazy(() => import("./pages/WorkspaceInvitation"));
+const Applications = lazy(() => import("./pages/Applications"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Employee = lazy(() => import("./pages/Employee"));
+const Meeting = lazy(() => import("./pages/Meeting"));
 
-import  Applications  from "./components/application";
-import MyApplications from "./components/MyApplications";
-
-
-
-
-import { Import } from "lucide-react";
-
-const queryClient = new QueryClient();
-function App() {
-  const navigate = useNavigate();
-  const location = useLocation(); // Use useLocation to access location.state
-
-
+const App = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000,
+      },
+    },
+  });
   return (
     <QueryClientProvider client={queryClient}>
-    <WorkspaceProvider>
-    <Routes>
-      {/* Main routes */}
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/reset-password" element={<PasswordReset />} />
-      <Route path="/set-password" element={<NewPasswordSet />} />
-      <Route path="/passwordchanged" element={<PasswordResetSuccess />} />
-      <Route path="/Sign-up" element={<SignUpPage />} />
-      <Route path="/Onboarding" element={<OnBoardingOne />} />
-      <Route path="/Onboarding-phase-one" element={<OnBoardingTwo />} />
-      <Route path="/Onboarding-phase-two" element={<OnBoardingThree />} />
-      <Route path="/Onboarding-phase-three" element={<OnBoardingFour />} />
-      <Route path="/overview" element={<UserOverviewUI />} />
-      <Route path="/feed" element={<FeedUI />} />
-      <Route path="/employee" element={<Employee />} />
-      <Route path="/profile" element={<MyProfile />} />
-      <Route path="/application" element={<Applications />} />
-      <Route path="/live-video" element={<LiveVideo />} />
-      
-      <Route path="/meeting" element={<MeetingUI />} />
-      <Route path="/applications" element={<MyApplications />} />
-    
-     
-    </Routes>
-    </WorkspaceProvider>
+      <AuthProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+        <Suspense fallback={<Loader />}>
+          <BrowserRouter>
+            <ScrollToTop />
+            <Toaster
+              position="top-right"
+              gutter={12}
+              containerStyle={{ margin: "8px" }}
+              toastOptions={{
+                success: { duration: 5000 },
+                error: { duration: 5000 },
+                style: {
+                  fontSize: "16px",
+                  maxWidth: "500px",
+                  padding: "16px 24px",
+                },
+              }}
+            />
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/signup"
+                element={
+                  <PublicRoute>
+                    <Signup />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/otp"
+                element={
+                  <PublicRoute>
+                    <OTP />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/resetPassword"
+                element={
+                  <PublicRoute>
+                    <ResetPassword />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/resetpasswordotp"
+                element={
+                  <PublicRoute>
+                    <ResetPasswordOTP />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/newpassword/:token"
+                element={
+                  <PublicRoute>
+                    <NewPassword />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/successfulreset"
+                element={
+                  <PublicRoute>
+                    <SuccessfulPasswordReset />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/createworkspace"
+                element={
+                  <ProtectedRoute>
+                    <CreateWorkspace />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <OnBoarding />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/workspacesetupdone"
+                element={
+                  <ProtectedRoute>
+                    <WorkSpaceSetupDone />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/workspaceinvite"
+                element={
+                  <ProtectedRoute>
+                    <WorkspaceInvitation />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/overview" element={<Overview />} />
+                <Route index element={<Overview />} />
+
+                <Route path="/applications" element={<Applications />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/employee" element={<Employee />} />
+                <Route path="/meetings" element={<Meeting />} />
+              </Route>
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </Suspense>
+      </AuthProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;
