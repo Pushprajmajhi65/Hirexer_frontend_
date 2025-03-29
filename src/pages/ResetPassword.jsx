@@ -7,13 +7,12 @@ import resetImage from "../assets/resetPassword.png";
 import triangles from "../assets/triangles.png";
 import dots from "../assets/dots.png";
 import { useResetPassword } from "@/services/auth";
-import { useNavigate } from "react-router-dom";
+
 
 const ResetPassword = () => {
   const { register, handleSubmit, reset } = useForm();
 
   const mutation = useResetPassword();
-  const navigate = useNavigate();
 
   const onSubmit = (data) => {
     console.log(data);
@@ -22,7 +21,6 @@ const ResetPassword = () => {
       {
         onSuccess: () => {
           reset();
-          navigate("/resetpasswordotp");
         },
       }
     );
@@ -53,8 +51,9 @@ const ResetPassword = () => {
             <input
               id="email"
               type="email"
+              disabled={mutation.isPending}
               placeholder="Email@email.com"
-              className="custom_otp_input"
+              className="custom_otp_input placeholder:text-center text-center"
               {...register("email", { required: "Email is required" })}
             />
             <Button

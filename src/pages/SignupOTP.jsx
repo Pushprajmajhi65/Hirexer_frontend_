@@ -24,7 +24,7 @@ const SignupOTP = () => {
 
   const onSubmit = (data) => {
     /*   console.log(data); */
-    console.log(email,data.otp)
+    //console.log(email,data.otp)
     mutation.mutate(
       { otp: data.otp, email },
       {

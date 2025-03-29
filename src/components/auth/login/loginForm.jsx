@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Wrapper from "../Wrapper";
-import { Checkbox } from "@/components/ui/checkbox";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useLogin } from "@/services/auth";
 
@@ -17,7 +16,6 @@ const LoginForm = () => {
   const { errors } = formState;
 
   const mutation = useLogin();
-  const navigate = useNavigate();
 
   const onSubmit = (data) => {
     /* console.log(data); */
@@ -26,11 +24,10 @@ const LoginForm = () => {
       {
         onSuccess: () => {
           reset();
-          navigate("/overview");
         },
       }
     );
-  };
+};
   return (
     <div className="flex flex-col items-center justify-center gap-[32px] ">
       <h2 className="text-[32px] font-[700] text-primary/80">Log in</h2>
