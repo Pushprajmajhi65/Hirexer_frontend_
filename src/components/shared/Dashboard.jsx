@@ -1,12 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Logo from "./Logo";
 import { DashBoardMenuItems } from "@/constants";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 const Dashboard = () => {
   const location = useLocation();
   const [isExpanded, setIsExpanded] = useState(true);
+  const { selectedWorkspace } = useWorkspace();
+  const userRole = selectedWorkspace?.user_role;
+
+  // Filter menu items based on user role
+  const menuItems = useMemo(() => {
+    if (!selectedWorkspace) return DashBoardMenuItems;
+
+    if (userRole === 'headmember') {
+      // Remove "Applied Jobs" for head member
+      return DashBoardMenuItems.filter(item => 
+        item.name.toLowerCase() !== 'applied jobs'
+      );
+    } else {
+      // Remove "Employee" and "Applications" for normal members
+      return DashBoardMenuItems.filter(item => 
+        !['employee', 'applications'].includes(item.name.toLowerCase())
+      );
+    }
+  }, [selectedWorkspace, userRole]);
 
   return (
     <>
@@ -38,14 +58,16 @@ const Dashboard = () => {
         </button>
 
         <nav className="mt-8 space-y-1">
-          {DashBoardMenuItems.map((item, index) => {
+          {menuItems.map((item, index) => {
+            const itemPath = item.name.toLowerCase().replace(/\s+/g, "-");
             const isActive =
-              location.pathname.toLowerCase() === `/${item.name.toLowerCase()}`;
+              (itemPath === "overview" && location.pathname === "/") ||
+              location.pathname === `/${itemPath}`;
 
             return (
               <Link
                 key={index}
-                to={`/${item.name.toLowerCase()}`}
+                to={itemPath === "overview" ? "/" : `/${itemPath}`}
                 className={`
                   group flex items-center relative
                   ${
@@ -92,7 +114,7 @@ const Dashboard = () => {
                 {isExpanded && (
                   <span className="ml-3 text-sm font-medium whitespace-nowrap hidden lg:block">
                     {item.name}
-                  </span>
+                </span>
                 )}
               </Link>
             );

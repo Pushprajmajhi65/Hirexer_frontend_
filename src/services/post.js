@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 async function createPost(formData) {
   const response = await axiosInstance.post("posts/create/", formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return response.data;
@@ -44,15 +44,17 @@ export function useGetPosts() {
   });
 }
 
-async function getPostApplications({ post_id }) {
+async function getPostApplications({ queryKey }) {
+  const [, post_id] = queryKey;
   const response = await axiosInstance.get(`posts/${post_id}/applications/`);
   return response.data;
 }
 
-export function useGetPostApplications() {
+export function useGetPostApplications(post_id) {
   return useQuery({
     queryFn: getPostApplications,
-    queryKey: ["getPostApplications"],
+    queryKey: ["getPostApplications", post_id],
+    enabled: !!post_id,
   });
 }
 
@@ -102,10 +104,13 @@ async function updateApplicationStatus({ application_id, status }) {
 }
 
 export function useUpdateApplicationStatus() {
-  const queryClient=useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateApplicationStatus,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["getPostApplications"] });
+      queryClient.invalidateQueries({ queryKey: ["getMyApplications"] });
+      queryClient.invalidateQueries({ queryKey: ["getMyApplications"] });
       toast.success("Status updated successfully");
     },
     onError: (error) => {
@@ -116,14 +121,16 @@ export function useUpdateApplicationStatus() {
   });
 }
 
-async function getWorkspacePosts({ workspace_id }) {
+async function getWorkspacePosts({ queryKey }) {
+  const [, workspace_id] = queryKey;
   const response = await axiosInstance.get(`workspaces/${workspace_id}/posts/`);
   return response.data;
 }
 
-export function useGetWorkspacePosts() {
+export function useGetWorkspacePosts(workspace_id) {
   return useQuery({
-    queryKey: ["getWorkspacePosts"],
+    queryKey: ["getWorkspacePosts", workspace_id],
     queryFn: getWorkspacePosts,
+    enabled: !!workspace_id,
   });
 }

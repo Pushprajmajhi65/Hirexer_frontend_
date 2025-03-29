@@ -26,7 +26,7 @@ const UpcomingMeetings = () => {
       meetingDate.getFullYear() === today.getFullYear()
     );
   });
-console.log(todayMeeting)
+/* console.log(todayMeeting) */
 
   if (isLoading) {
     return <LoadingSkeleton />;

@@ -1,23 +1,43 @@
-import { Newspaper, Users, LayoutGrid, Video, FileText } from "lucide-react";
+import {
+  Newspaper,
+  Users,
+  LayoutGrid,
+  Video,
+  FileText,
+  Briefcase,
+} from "lucide-react";
 
 export const DashBoardMenuItems = [
   {
     icon: <LayoutGrid size={20} />,
     name: "Overview",
+    allowedRoles: ["headmember", "member"], // accessible to all
   },
   {
     icon: <Newspaper size={20} />,
     name: "Feed",
+    allowedRoles: ["headmember", "member"], // accessible to all
   },
   {
     icon: <Video size={20} />,
     name: "Meetings",
+    allowedRoles: ["headmember", "member"], // accessible to all
   },
   {
     icon: <Users size={20} />,
     name: "Employee",
+    allowedRoles: ["headmember"], // only for head members
   },
-  { icon: <FileText size={20} />, name: "Applications" },
+  { 
+    icon: <FileText size={20} />, 
+    name: "Applications",
+    allowedRoles: ["headmember"], // only for head members
+  },
+  { 
+    icon: <Briefcase size={20} />, 
+    name: "Applied Jobs",
+    allowedRoles: ["member"], // only for normal members
+  },
 ];
 
 export const IndustryNames = [
@@ -98,4 +118,43 @@ export const overviewTable = [
   { id: 4, name: "Joined At" },
   { id: 5, name: "Type" },
   { id: 6, name: "Status" },
+];
+
+export const employeeStatus = [
+  {
+    id: 1,
+    name: "Pending",
+  },
+  {
+    id: 2,
+    name: "Active",
+  },
+  { id: 3, name: "Inactive" },
+];
+
+export const jobStatuses = [
+  {
+    id: 1,
+    name: "Submitted",
+  },
+  {
+    id: 2,
+    name: "In Review",
+  },
+  {
+    id: 3,
+    name: "Schedule Meeting",
+  },
+  {
+    id: 4,
+    name: "Pending",
+  },
+  {
+    id: 5,
+    name: "Approved",
+  },
+  {
+    id: 6,
+    name: "Rejected",
+  },
 ];

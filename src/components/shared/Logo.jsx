@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 
 const Logo = () => {
   return (
-    <NavLink to="/">
+    <NavLink to="/overview">
       <img src={LogoImage} alt="logo image" className="h-12 "/>
     </NavLink>
   );

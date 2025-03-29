@@ -66,9 +66,9 @@ const MembersTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {workspaceData.members_details?.map((el) => (
+          {workspaceData.members_details?.map((el,index) => (
             <TableRow key={el.id} className="bg-white hover:bg-gray-50">
-              <TableCell>{el.id}</TableCell>
+              <TableCell>{index+1}</TableCell>
               <TableCell>{el.username}</TableCell>
               <TableCell>{el.email}</TableCell>
               <TableCell>{new Date(el.joined_at).toLocaleDateString()}</TableCell>

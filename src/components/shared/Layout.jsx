@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 const Layout = () => {
   const location = useLocation();
   const bgClass =
-    location.pathname === "/applications" ? "bg-applicationBg" : "bg-figmaGray";
+    location.pathname === "/applications" || "/applied jobs"
+      ? "bg-applicationBg"
+      : "bg-figmaGray";
 
   return (
     <div className="flex min-h-screen relative">

@@ -2,6 +2,7 @@ import React from 'react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { useGetUserWorkspace } from '@/services/workspace';
 import { Navigate } from 'react-router-dom';
+import Loader from '../shared/Loader';
 
 const WorkspaceGuard = ({ children }) => {
   const { selectedWorkspace, setSelectedWorkspace, setWorkspaces } = useWorkspace();
@@ -17,7 +18,7 @@ const WorkspaceGuard = ({ children }) => {
   }, [workspaces, setWorkspaces, selectedWorkspace, setSelectedWorkspace]);
 
   if (isLoading) {
-    return <div>Loading...</div>; 
+    return <Loader/>; 
   }
 
   if (isError) {

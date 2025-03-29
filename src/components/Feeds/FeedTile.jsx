@@ -65,7 +65,7 @@ const FeedTile = ({ el }) => {
           <img
             src={el.image}
             alt="post image"
-            className="h-[400px] w-full object-cover rounded-md"
+            className="h-[600px] w-full object-cover rounded-md"
           />
         </CardContent>
       </Card>

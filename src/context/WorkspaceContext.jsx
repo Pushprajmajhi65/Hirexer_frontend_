@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 const WorkspaceContext = createContext();
 
@@ -8,12 +8,18 @@ export function WorkspaceProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
   const [workspaces, setWorkspaces] = useState([]);
-  const [userName, setUserName] = useState(() => 
-    localStorage.getItem("hirexer_username") || ""
+  const [userName, setUserName] = useState(
+    () => localStorage.getItem("hirexer_username") || "",
   );
+  const [userRole, setUserRole] = useState(() => {
+    const workspace = JSON.parse(localStorage.getItem("selectedWorkspace"));
+    return workspace?.user_role || null;
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSelectWorkspace = (workspace) => {
     setSelectedWorkspace(workspace);
+    setUserRole(workspace.user_role);
     localStorage.setItem("selectedWorkspace", JSON.stringify(workspace));
   };
 
@@ -26,6 +32,9 @@ export function WorkspaceProvider({ children }) {
         setWorkspaces,
         userName,
         setUserName,
+        userRole,
+        isLoading,
+        setIsLoading,
       }}
     >
       {children}

@@ -16,7 +16,9 @@ const Header = () => {
   const location = useLocation();
   const { userName } = useWorkspace();
   const backgroundClass =
-    location.pathname === "/applications" ? "bg-applicationBg" : "bg-figmaGray";
+    location.pathname === "/applications" || "/applied jobs"
+      ? "bg-applicationBg"
+      : "bg-figmaGray";
 
   return (
     <div
@@ -30,10 +32,7 @@ const Header = () => {
           <DropdownMenuTrigger className="outline-none">
             <div className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Avatar className="h-10 w-10 border-2 border-gray-200">
-                <AvatarImage
-                  src=""
-                  alt="@shadcn"
-                />
+                <AvatarImage src="" alt="@shadcn" />
                 <AvatarFallback>{getInitial(userName)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">

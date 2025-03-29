@@ -50,6 +50,7 @@ async function inviteMembers({ meeting_id, user_emails }) {
 }
 
 export function useInviteMeeting() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: inviteMembers,
     mutationKey: ["inviteMembers"],
@@ -73,15 +74,15 @@ export function useJoinMeeting() {
     mutationFn: joinMeeting,
     mutationKey: ["joinMeeting"],
     onSuccess: (data) => {
-      console.log(data)
+      console.log(data);
       const { twilio_room_name, twilio_token, participants } = data;
 
       // Construct URL with parameters
       const url = `/live-video?channelName=${encodeURIComponent(
         twilio_room_name
-      )}&token=${encodeURIComponent(twilio_token)}&participants=${encodeURIComponent(
-        JSON.stringify(participants)
-      )}`;
+      )}&token=${encodeURIComponent(
+        twilio_token
+      )}&participants=${encodeURIComponent(JSON.stringify(participants))}`;
 
       // Open in new tab
       window.open(url, "_blank");
@@ -107,7 +108,7 @@ export function useGetUserMeetings() {
 }
 
 async function deleteMeeting({ id }) {
-  console.log(id)
+  console.log(id);
   const response = await axiosInstance.delete(`delete/${Number(id)}/`);
   return response.data;
 }
