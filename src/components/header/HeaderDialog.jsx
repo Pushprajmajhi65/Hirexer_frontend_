@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "../ui/button";
 import {
   CirclePlus,
@@ -8,40 +8,48 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Separator } from "../ui/separator";
-import { Avatar, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenuItem } from "../ui/dropdown-menu";
-
-const workSpaceData = [
-  {
-    image: "https://github.com/shadcn.png",
-    name: "Test2",
-  },
-  {
-    image: "https://github.com/shadcn.png",
-    name: "Test3",
-  },
-  {
-    image: "https://github.com/shadcn.png",
-    name: "Test4",
-  },
-  {
-    image: "https://github.com/shadcn.png",
-    name: "Test5",
-  },
-  {
-    image: "https://github.com/shadcn.png",
-    name: "Test6",
-  },
-  {
-    image: "https://github.com/shadcn.png",
-    name: "Test7",
-  },
-];
+import { useLogout } from "@/services/auth";
+import { useGetUserWorkspace } from "@/services/workspace";
+import WorkspaceLoader from "./WorkspaceLoader";
+import { useWorkspace } from "@/context/WorkspaceContext";
+import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
+import { getInitial } from "@/utils/getInitial";
 
 const HeaderDialog = () => {
   const navigate = useNavigate();
   const scrollRef = React.useRef(null);
+
+  const { selectedWorkspace, setSelectedWorkspace, setWorkspaces } =
+    useWorkspace();
+
+  const logoutMutation = useLogout();
+  const { data, isLoading: isWorkspaceLoading } = useGetUserWorkspace();
+
+  const handleLogOut = () => {
+    const refreshToken =
+      localStorage.getItem("hirexer_refresh_token") ||
+      sessionStorage.getItem("hirexer_refresh_token");
+
+    if (refreshToken) {
+      logoutMutation.mutate({ refresh: refreshToken });
+    } else {
+      toast.error("No refresh token found");
+    }
+  };
+
+  useEffect(() => {
+    if (data) {
+      setWorkspaces(data);
+
+      if (!selectedWorkspace && data.length > 0) {
+        setSelectedWorkspace(data[0]);
+      }
+    }
+  }, [data, setWorkspaces, selectedWorkspace, setSelectedWorkspace]);
 
   const scroll = (direction) => {
     if (scrollRef.current) {
@@ -82,19 +90,32 @@ const HeaderDialog = () => {
             "-ms-overflow-style": "none",
           }}
         >
-          {workSpaceData.map((workspace) => (
-            <button
-              key={workspace.name}
-              className="flex flex-col items-center gap-1 min-w-[72px] p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={workspace.image} alt={workspace.name} />
-              </Avatar>
-              <span className="text-xs text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis w-full text-center">
-                {workspace.name}
-              </span>
-            </button>
-          ))}
+          {isWorkspaceLoading ? (
+            <WorkspaceLoader />
+          ) : (
+            data.map((workspace) => (
+              <button
+                onClick={() => setSelectedWorkspace(workspace)}
+                key={workspace.name}
+                className={cn(
+                  "flex flex-col items-center gap-1 min-w-[72px] p-2 hover:bg-gray-100 rounded-lg transition-colors",
+                  selectedWorkspace?.id === workspace.id ? "bg-figmaPrimary" : ""
+                )}
+              >
+                <Avatar className="h-9 w-9">
+                  <AvatarImage
+                    src=""
+                    alt={workspace.name}
+                  />
+                  <AvatarFallback>{getInitial(workspace.name)}</AvatarFallback>
+                </Avatar>
+
+                <span className="text-xs text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis w-full text-center">
+                  {workspace.name}
+                </span>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
@@ -118,7 +139,7 @@ const HeaderDialog = () => {
         <DropdownMenuItem>
           <Button
             variant="outline"
-            onClick={() => navigate("/createworkspace")}
+            onClick={() => navigate("/onboarding")}
             className="w-full border-gray-300 hover:bg-gray-50"
           >
             <div className="flex items-center gap-2 mx-auto">
@@ -130,6 +151,7 @@ const HeaderDialog = () => {
 
         <DropdownMenuItem>
           <Button
+            onClick={handleLogOut}
             variant="outline"
             className="w-full border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-600"
           >
