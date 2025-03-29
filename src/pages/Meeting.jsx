@@ -12,6 +12,7 @@ import { JoinMeetingDialog } from "@/components/meeting/JoinMeeting";
 const Meeting = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { data: meetings, isLoading } = useGetUserMeetings();
+  console.log(meetings)
 
   const handleCreateDialog = () => {
     setIsCreateDialogOpen(false);

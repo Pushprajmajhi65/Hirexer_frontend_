@@ -293,7 +293,7 @@ const RTC = () => {
             {videoEnabled ? <FaVideo size={20} /> : <FaVideoSlash size={20} />}
           </button>
 
-          <button
+          {/* <button
             onClick={isScreenSharing ? stopScreenSharing : startScreenSharing}
             className={`p-4 rounded-full transition-all transform hover:scale-110 ${
               isScreenSharing
@@ -302,9 +302,9 @@ const RTC = () => {
             }`}
           >
             <FaDesktop size={20} />
-          </button>
+          </button> */}
 
-          <button
+        {/*   <button
             onClick={() => setShowChat(!showChat)}
             className={`p-4 rounded-full transition-all transform hover:scale-110 ${
               showChat
@@ -313,7 +313,7 @@ const RTC = () => {
             }`}
           >
             <FaComments size={20} />
-          </button>
+          </button> */}
 
           <button
             onClick={() => setIsLeaving(true)}

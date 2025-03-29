@@ -13,6 +13,7 @@ import { getInitial } from "@/utils/getInitial";
 import ApplyDialog from "./ApplyDialog";
 
 const FeedTile = ({ el }) => {
+  /*   console.log(el.id)  */
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
 
@@ -65,13 +66,14 @@ const FeedTile = ({ el }) => {
           <img
             src={el.image}
             alt="post image"
-            className="h-[600px] w-full object-cover rounded-md"
+            className="w-full aspect-[16/9] object-cover rounded-md"
           />
         </CardContent>
       </Card>
-      <ApplyDialog 
-        open={applyDialogOpen} 
-        onClose={() => setApplyDialogOpen(false)} 
+      <ApplyDialog
+        id={el.id}
+        open={applyDialogOpen}
+        onClose={() => setApplyDialogOpen(false)}
       />
     </div>
   );

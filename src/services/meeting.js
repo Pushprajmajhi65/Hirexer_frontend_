@@ -56,6 +56,7 @@ export function useInviteMeeting() {
     mutationKey: ["inviteMembers"],
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["getUserMeetings"] });
+      queryClient.refetchQueries({ queryKey: ["getUserMeetings"] });
       toast.success(data.message);
     },
     onError: (error) => {

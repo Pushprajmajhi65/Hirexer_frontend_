@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -12,23 +12,19 @@ import { Skeleton } from "../ui/skeleton";
 import { useParams } from "react-router-dom";
 import { useGetPostApplications } from "@/services/post";
 import { getStatusColor } from "@/utils/getStatusColor";
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import EditDialog from "./EditDialog";
+import { Edit } from "lucide-react";
 
 const ApplicationTable = () => {
   const { id } = useParams();
+  const [open, setIsOpen] = useState(false);
   /*   console.log(id); */
   const { data, isLoading } = useGetPostApplications(id);
-  const applications = [
-    {
-      id: 16,
-      post: 14,
-      user: "pushprajmajhidc",
-      email: "pushprajmajhi67+90@gmail.com",
-      experience_level: 3,
-      cv: "google.com",
-      applied_at: "2025-03-21T11:58:32.691496Z",
-      application_status: "Pending Decision",
-    },
-  ];
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+ 
   // Format date
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -75,7 +71,7 @@ const ApplicationTable = () => {
     );
   }
 
-  if (!applications?.length) {
+  if (!data?.length) {
     return (
       <div className="text-center py-10">
         <p className="text-gray-500">No applications found</p>
@@ -98,7 +94,7 @@ const ApplicationTable = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {applications.map((application) => (
+        {data.map((application) => (
           <TableRow key={application.id} className="bg-white hover:bg-gray-50">
             <TableCell>{formatDate(application.applied_at)}</TableCell>
             <TableCell>{application.email}</TableCell>
@@ -119,14 +115,14 @@ const ApplicationTable = () => {
               </a>
             </TableCell>
             <TableCell>
-              <button
-                onClick={() => {
-                  /* Add your action handler */
-                }}
-                className="text-figmaPrimary hover:underline"
-              >
-                View Details
-              </button>
+              <Dialog>
+                <DialogTrigger>
+                  <Edit className="text-figmaPrimary" size={20}/>
+                </DialogTrigger>
+                <DialogContent>
+                  <EditDialog employee={application} onClose={handleClose} />
+                </DialogContent>
+              </Dialog>
             </TableCell>
           </TableRow>
         ))}

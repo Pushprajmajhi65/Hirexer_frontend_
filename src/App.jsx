@@ -52,7 +52,7 @@ const App = () => {
             <BrowserRouter>
               <ScrollToTop />
               <Toaster
-                position="top-right"
+                position="bottom-right"
                 gutter={12}
                 containerStyle={{ margin: "8px" }}
                 toastOptions={{
@@ -168,7 +168,7 @@ const App = () => {
                   <Route
                     path="/myapplications/:id"
                     element={
-                      <RoleProtectedRoute allowedRoles={['member']}>
+                      <RoleProtectedRoute allowedRoles={['headmember']}>
                         <MyApplications />
                       </RoleProtectedRoute>
                     }
@@ -182,13 +182,13 @@ const App = () => {
                     }
                   />
 
-                  {/* Routes Accessible to All Authenticated Users */}
+              
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/meetings" element={<Meeting />} />
                   <Route path="/feed" element={<Feed />} />
                 </Route>
 
-                {/* Other Routes */}
+            
                 <Route path="*" element={<PageNotFound />} />
                 <Route path="/live-video" element={<RTC />} />
               </Routes>

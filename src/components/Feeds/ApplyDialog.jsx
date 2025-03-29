@@ -6,14 +6,27 @@ import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { FileIcon, X, Upload } from "lucide-react";
 import toast from "react-hot-toast";
+import { useWorkspace } from "@/context/WorkspaceContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { experienceLevel } from "@/constants";
+import { useApplyPost } from "@/services/post";
 
-const MAX_FILE_SIZE = 150 * 1024 * 1024; 
+const MAX_FILE_SIZE = 150 * 1024 * 1024;
 
-const ApplyDialog = ({ open, onClose }) => {
-  const [message, setMessage] = useState("");
+const ApplyDialog = ({ open, onClose, id }) => {
+  const { selectedWorkspace, workspaces } = useWorkspace();
+  /*   const [message, setMessage] = useState(""); */
   const [cv, setCv] = useState(null);
+  const [experience, setExperience] = useState("");
 
   const fileInputRef = useRef(null);
+  const mutation = useApplyPost();
 
   const handleFileUpload = (file) => {
     if (file) {
@@ -22,7 +35,11 @@ const ApplyDialog = ({ open, onClose }) => {
         return;
       }
 
-      if (!file.type.includes('pdf') && !file.type.includes('doc') && !file.type.includes('docx')) {
+      if (
+        !file.type.includes("pdf") &&
+        !file.type.includes("doc") &&
+        !file.type.includes("docx")
+      ) {
         toast.error("Please upload PDF or Word documents only");
         return;
       }
@@ -33,17 +50,17 @@ const ApplyDialog = ({ open, onClose }) => {
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    e.currentTarget.classList.add('border-primary');
+    e.currentTarget.classList.add("border-primary");
   };
 
   const handleDragLeave = (e) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('border-primary');
+    e.currentTarget.classList.remove("border-primary");
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('border-primary');
+    e.currentTarget.classList.remove("border-primary");
     const file = e.dataTransfer.files[0];
     handleFileUpload(file);
   };
@@ -51,7 +68,7 @@ const ApplyDialog = ({ open, onClose }) => {
   const removeFile = () => {
     setCv(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -61,17 +78,38 @@ const ApplyDialog = ({ open, onClose }) => {
       return;
     }
 
-    if (!message.trim()) {
+    /*  if (!message.trim()) {
       toast.error("Please write a message");
+      return;
+    } */
+
+    if (!experience) {
+      toast.error("Please select your experience level");
       return;
     }
 
-    
-      const formData = new FormData();
-      formData.append('message', message);
-      formData.append('cv', cv);
+    const formData = new FormData();
+    /*     formData.append("message", message); */
+    formData.append("cv", cv);
+    formData.append("experience_level", experience);
 
-
+    console.log(experience);
+    mutation.mutate(
+      {
+        cv,
+        post: id,
+        experience_level: experience,
+        email: selectedWorkspace.email,
+        applied_at: new Date(),
+      },
+      {
+        onSuccess: () => {
+          setCv("");
+          setExperience("");
+          onClose();
+        },
+      }
+    );
   };
 
   return (
@@ -90,22 +128,37 @@ const ApplyDialog = ({ open, onClose }) => {
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
           <section className="">
-            <h3 className="text-primary/90 font-[600] text-[14px]">Lorem Ipsum</h3>
-            <p className="text-[12px] text-muted-foreground">test@gmail.com</p>
+            <h3 className="text-primary/90 font-[600] text-[14px]">
+              {selectedWorkspace?.name}
+            </h3>
+            <p className="text-[12px] text-muted-foreground">
+              {selectedWorkspace.email}
+            </p>
           </section>
         </section>
 
         <div className="space-y-4 mt-4">
-     
-          <div className="  bg-background p-2">
+          <Select onValueChange={setExperience} value={experience}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select experience level" />
+            </SelectTrigger>
+            <SelectContent>
+              {experienceLevel.map((level) => (
+                <SelectItem key={level.id} value={level.name}>
+                  {level.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/*     <div className="bg-background p-2">
             <Textarea
               placeholder="Write something about yourself..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="min-h-[20px] resize-none border-0 focus:ring-0 p-0 focus-visible:ring-0"
             />
-          </div>
-
+          </div> */}
 
           {!cv ? (
             <div
@@ -116,7 +169,9 @@ const ApplyDialog = ({ open, onClose }) => {
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="h-12 w-12 text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500">Upload your CV (PDF or Word)</p>
+              <p className="text-sm text-gray-500">
+                Upload your CV (PDF or Word)
+              </p>
               <p className="text-xs text-gray-400 mt-1">Max size: 150MB</p>
               <input
                 ref={fileInputRef}
@@ -146,15 +201,14 @@ const ApplyDialog = ({ open, onClose }) => {
             </div>
           )}
 
-       <section className="flex justify-end">
-       <Button
-            className=""
-            onClick={handleSubmit}
-          /*   disabled={isSubmitting || !cv || !message.trim()} */
-          >la
-            {/* {isSubmitting ? "Submitting..." : "Submit Application"} */}
-          </Button>
-       </section>
+          <section className="flex justify-end">
+            <Button
+              onClick={handleSubmit}
+              disabled={!cv || !experience || mutation.isPending}
+            >
+              {mutation.isPending ? "Submitting" : "Submit Application"}
+            </Button>
+          </section>
         </div>
       </DialogContent>
     </Dialog>

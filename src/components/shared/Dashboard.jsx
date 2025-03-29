@@ -11,17 +11,15 @@ const Dashboard = () => {
   const { selectedWorkspace } = useWorkspace();
   const userRole = selectedWorkspace?.user_role;
 
-  // Filter menu items based on user role
   const menuItems = useMemo(() => {
     if (!selectedWorkspace) return DashBoardMenuItems;
 
     if (userRole === 'headmember') {
-      // Remove "Applied Jobs" for head member
+
       return DashBoardMenuItems.filter(item => 
         item.name.toLowerCase() !== 'applied jobs'
       );
     } else {
-      // Remove "Employee" and "Applications" for normal members
       return DashBoardMenuItems.filter(item => 
         !['employee', 'applications'].includes(item.name.toLowerCase())
       );

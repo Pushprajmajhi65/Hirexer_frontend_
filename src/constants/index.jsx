@@ -11,32 +11,32 @@ export const DashBoardMenuItems = [
   {
     icon: <LayoutGrid size={20} />,
     name: "Overview",
-    allowedRoles: ["headmember", "member"], // accessible to all
+    allowedRoles: ["headmember", "member"], 
   },
   {
     icon: <Newspaper size={20} />,
     name: "Feed",
-    allowedRoles: ["headmember", "member"], // accessible to all
+    allowedRoles: ["headmember", "member"],
   },
   {
     icon: <Video size={20} />,
     name: "Meetings",
-    allowedRoles: ["headmember", "member"], // accessible to all
+    allowedRoles: ["headmember", "member"],
   },
   {
     icon: <Users size={20} />,
     name: "Employee",
-    allowedRoles: ["headmember"], // only for head members
+    allowedRoles: ["headmember"], 
   },
   { 
     icon: <FileText size={20} />, 
     name: "Applications",
-    allowedRoles: ["headmember"], // only for head members
+    allowedRoles: ["headmember"], 
   },
   { 
     icon: <Briefcase size={20} />, 
     name: "Applied Jobs",
-    allowedRoles: ["member"], // only for normal members
+    allowedRoles: ["member"], 
   },
 ];
 

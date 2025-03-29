@@ -54,6 +54,7 @@ async function signup({ username, email, password }) {
 }
 
 export function useSignup() {
+  const navigate=useNavigate()
   return useMutation({
     mutationFn: signup,
     onSuccess: (data) => {
@@ -62,6 +63,7 @@ export function useSignup() {
     },
     onError: (error) => {
       /*    console.log(error); */
+      if(error?.response?.data?.error==='Email already in use. Please use a different email.') navigate('/resetPassword')
       toast.error(error?.response?.data?.error || "User registration failed");
     },
   });
@@ -86,6 +88,7 @@ export function useVerifyOTP() {
     },
     onError: (error) => {
       //console.log(error);
+    
       toast.error(error?.response?.data?.error || "OTP verification failed");
     },
   });

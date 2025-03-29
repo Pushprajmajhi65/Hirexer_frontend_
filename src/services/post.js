@@ -58,13 +58,22 @@ export function useGetPostApplications(post_id) {
   });
 }
 
-async function applyPost({ post, email, experience_level, applied_at }) {
-  const response = await axiosInstance.post("applications/apply/", {
-    post,
-    email,
-    experience_level,
-    applied_at,
-  });
+async function applyPost({ post, email, experience_level, applied_at, cv }) {
+  const response = await axiosInstance.post(
+    "applications/apply/",
+    {
+      post,
+      email,
+      experience_level,
+      applied_at,
+      cv
+    },
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
   return response.data;
 }
 
@@ -78,6 +87,7 @@ export function useApplyPost() {
       toast.success("Applied for the post successfully");
     },
     onError: (error) => {
+      console.log(error)
       toast.error(error?.response.data.error || "Failed to apply for the post");
     },
   });
@@ -96,7 +106,7 @@ export function useGetUserApplications() {
 }
 
 async function updateApplicationStatus({ application_id, status }) {
-  const response = await axiosInstance.patch(
+  const response = await axiosInstance.post(
     `applications/${application_id}/status/`,
     { status }
   );
@@ -110,10 +120,12 @@ export function useUpdateApplicationStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["getPostApplications"] });
       queryClient.invalidateQueries({ queryKey: ["getMyApplications"] });
-      queryClient.invalidateQueries({ queryKey: ["getMyApplications"] });
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["workspace"] });
       toast.success("Status updated successfully");
     },
     onError: (error) => {
+      console.log(error);
       toast.error(
         error?.response?.data.error || "Failed to update application status"
       );

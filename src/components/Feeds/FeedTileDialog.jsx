@@ -8,6 +8,7 @@ const FeedTileDialog = ({ onClose, onApply }) => {
   const { selectedWorkspace } = useWorkspace();
   const handleApplyClick = () => {
     onApply();
+    onClose()
   };
   return (
     <div className="flex flex-col items-center gap-2 w-full">

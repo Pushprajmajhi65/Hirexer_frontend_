@@ -137,7 +137,7 @@ const EmployeeTable = () => {
 
             {!isLoading && filteredData.map((member, index) => (
               <TableRow key={member.id} className="border-b hover:bg-gray-50">
-                <TableCell>{member.id}</TableCell>
+                <TableCell>{index+1}</TableCell>
                 <TableCell>{member.username}</TableCell>
                 <TableCell>{new Date(member.joined_at).toLocaleDateString()}</TableCell>
                 <TableCell>{member.email}</TableCell>

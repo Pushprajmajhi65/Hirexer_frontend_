@@ -13,13 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { employeeStatus } from "@/constants";
+import { jobStatuses } from "@/constants";
 import toast from "react-hot-toast";
 import { useUpdateApplicationStatus } from "@/services/post";
 
 const EditDialog = ({ onClose, employee }) => {
   const [status, setStatus] = useState(employee?.status || "");
-  const mutation = useUpdateApplicationStatus();
+const mutation=useUpdateApplicationStatus()
 
   const handleStatusUpdate = () => {
     if (!status) {
@@ -31,7 +31,7 @@ const EditDialog = ({ onClose, employee }) => {
       return;
     }
 
-    console.log(employee.id,status.toLowerCase())
+/*     console.log(employee.id,status.toLowerCase()) */
     mutation.mutate(
       {
         memberId: employee.id,
@@ -61,7 +61,7 @@ const EditDialog = ({ onClose, employee }) => {
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
-            {employeeStatus.map((status) => (
+            {jobStatuses.map((status) => (
               <SelectItem key={status.id} value={status.name}>
                 {status.name}
               </SelectItem>
