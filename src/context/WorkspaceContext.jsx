@@ -3,30 +3,20 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const WorkspaceContext = createContext();
 
 export function WorkspaceProvider({ children }) {
-  const [selectedWorkspace, setSelectedWorkspace] = useState(null);
-  const [workspaces, setWorkspaces] = useState([]);
-  const [userName, setUserName] = useState(() => {
-    return localStorage.getItem("hirexer_username") || "";
+  const [selectedWorkspace, setSelectedWorkspace] = useState(() => {
+    const saved = localStorage.getItem("selectedWorkspace");
+    return saved ? JSON.parse(saved) : null;
   });
-  useEffect(() => {
-    const savedWorkspace = localStorage.getItem("selectedWorkspace");
-    if (savedWorkspace) {
-      setSelectedWorkspace(JSON.parse(savedWorkspace));
-    }
-  }, []);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [userName, setUserName] = useState(() => 
+    localStorage.getItem("hirexer_username") || ""
+  );
 
   const handleSelectWorkspace = (workspace) => {
     setSelectedWorkspace(workspace);
     localStorage.setItem("selectedWorkspace", JSON.stringify(workspace));
   };
 
-  useEffect(() => {
-     if (userName) {
-       localStorage.setItem("hirexer_username", userName);
-     }
-   }, [userName]);
-  
-  
   return (
     <WorkspaceContext.Provider
       value={{

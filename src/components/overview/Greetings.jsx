@@ -25,7 +25,7 @@ const Greetings = () => {
           {greeting},
         </h1>
         <h2 className="font-[600] text-xl md:text-[30px] text-primary/80 capitalize">
-          {userName}
+          {userName || "User"}
         </h2>
       </section>
 

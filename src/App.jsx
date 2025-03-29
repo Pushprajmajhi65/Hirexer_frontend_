@@ -10,8 +10,8 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { PublicRoute } from "./components/auth/PublicRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { WorkspaceProvider } from "./context/WorkspaceContext";
-const SuccessfulPasswordReset = lazy(() =>
-  import("./pages/SuccessfulPasswordReset")
+const SuccessfulPasswordReset = lazy(
+  () => import("./pages/SuccessfulPasswordReset"),
 );
 const PageNotFound = lazy(() => import("./pages/PageNotFound"));
 const Login = lazy(() => import("./pages/Login"));

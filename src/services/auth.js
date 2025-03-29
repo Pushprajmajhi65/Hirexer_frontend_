@@ -104,7 +104,7 @@ async function login({ email, password, remember }) {
 
 export function useLogin() {
   const { setIsAuthenticated } = useAuth();
-  const { setUserName } = useWorkspace();
+  const { setUserName, setWorkspaces, setSelectedWorkspace } = useWorkspace();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -113,8 +113,7 @@ export function useLogin() {
     onSuccess: async (data) => {
       setTokens(data.tokens.access, data.tokens.refresh, data.remember);
       setIsAuthenticated(true);
-      toast.success("Logged in successfully");
-      /*     console.log(data) */
+      
       if (data.username) {
         localStorage.setItem("hirexer_username", data.username);
         setUserName(data.username);
@@ -122,12 +121,16 @@ export function useLogin() {
 
       try {
         const workspaceResponse = await axiosInstance.get("api/workspaces/");
-        const hasWorkspace =
-          workspaceResponse.data && workspaceResponse.data.length > 0;
+        const workspaces = workspaceResponse.data;
+        
+        // Set workspaces in context and cache
+        setWorkspaces(workspaces);
+        queryClient.setQueryData(["workspaces"], workspaces);
 
-        queryClient.setQueryData(["workspace"], workspaceResponse.data);
-
-        if (hasWorkspace) {
+        if (workspaces && workspaces.length > 0) {
+          // Set the first workspace as selected
+          setSelectedWorkspace(workspaces[0]);
+          localStorage.setItem("selectedWorkspace", JSON.stringify(workspaces[0]));
           navigate("/overview");
         } else {
           navigate("/onboarding");
@@ -136,6 +139,8 @@ export function useLogin() {
         console.error("Error checking workspace:", error);
         navigate("/onboarding");
       }
+
+      toast.success("Logged in successfully");
     },
     onError: (error) => {
       toast.error(error?.response?.data?.error || "User login failed");
