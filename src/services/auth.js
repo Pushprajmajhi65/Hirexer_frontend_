@@ -190,6 +190,7 @@ export function useVerifyResetPasswordOTP() {
       navigate("/login");
     },
     onError: (error) => {
+   /*    console.log(error) */
       toast.error(
         error?.response.data.error || "OTP has expired or is invalid",
       );

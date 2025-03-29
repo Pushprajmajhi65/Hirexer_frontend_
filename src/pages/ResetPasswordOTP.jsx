@@ -22,9 +22,15 @@ const ResetPasswordOTP = () => {
     /*   console.log(data, decodedEmail); */
     mutation.mutate({
       email: decodedEmail,
-      otp: Number(data.otp),
+      otp: data.otp,
       new_password: data.new_password,
     });
+
+/*     console.log({
+      email: decodedEmail,
+      otp: data.otp,
+      new_password: data.new_password,
+    }) */
   };
   return (
     <div className="bg-figmaBackground h-screen px-4 xl:px-0 relative overflow-hidden">
