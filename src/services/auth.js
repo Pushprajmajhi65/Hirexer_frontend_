@@ -97,7 +97,7 @@ async function login({ email, password, remember }) {
     { email, password },
     {
       withCredentials: true,
-    }
+    },
   );
   return { ...response.data, remember };
 }
@@ -115,8 +115,10 @@ export function useLogin() {
       setIsAuthenticated(true);
       toast.success("Logged in successfully");
       /*     console.log(data) */
-      localStorage.setItem("hirexer_username", data.username);
-      setUserName(data.username);
+      if (data.username) {
+        localStorage.setItem("hirexer_username", data.username);
+        setUserName(data.username);
+      }
 
       try {
         const workspaceResponse = await axiosInstance.get("api/workspaces/");
@@ -184,7 +186,7 @@ export function useVerifyResetPasswordOTP() {
     },
     onError: (error) => {
       toast.error(
-        error?.response.data.error || "OTP has expired or is invalid"
+        error?.response.data.error || "OTP has expired or is invalid",
       );
     },
   });

@@ -5,16 +5,13 @@ const WorkspaceContext = createContext();
 export function WorkspaceProvider({ children }) {
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
   const [workspaces, setWorkspaces] = useState([]);
-  const [userName, setUserName] = useState("");
-
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem("hirexer_username") || "";
+  });
   useEffect(() => {
     const savedWorkspace = localStorage.getItem("selectedWorkspace");
-    const username = localStorage.getItem("hirexer_username");
     if (savedWorkspace) {
       setSelectedWorkspace(JSON.parse(savedWorkspace));
-    }
-    if (username) {
-      setUserName(username);
     }
   }, []);
 
@@ -23,6 +20,13 @@ export function WorkspaceProvider({ children }) {
     localStorage.setItem("selectedWorkspace", JSON.stringify(workspace));
   };
 
+  useEffect(() => {
+     if (userName) {
+       localStorage.setItem("hirexer_username", userName);
+     }
+   }, [userName]);
+  
+  
   return (
     <WorkspaceContext.Provider
       value={{
