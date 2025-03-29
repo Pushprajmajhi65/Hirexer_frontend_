@@ -9,30 +9,37 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import HeaderDialog from "../header/HeaderDialog";
+import { useWorkspace } from "@/context/WorkspaceContext";
+import { getInitial } from "@/utils/getInitial";
 
 const Header = () => {
   const location = useLocation();
+  const { userName } = useWorkspace();
   const backgroundClass =
     location.pathname === "/applications" ? "bg-applicationBg" : "bg-figmaGray";
-    
+
   return (
     <div
       className={cn(
-        "h-[90px] flex items-center justify-end py-6 px-4 xl:px-16",
+        "h-[90px] flex items-center justify-end py-6 px-4 xl:px-16 sticky top-0 z-20 shadow-sm",
         backgroundClass
       )}
     >
       <div className="flex items-center gap-6">
-     
         <DropdownMenu>
           <DropdownMenuTrigger className="outline-none">
             <div className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Avatar className="h-10 w-10 border-2 border-gray-200">
-                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarImage
+                  src=""
+                  alt="@shadcn"
+                />
+                <AvatarFallback>{getInitial(userName)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
-                <h3 className="font-semibold text-gray-900">John Doe</h3>
+                <h3 className="font-semibold text-gray-900 capitalize">
+                  {userName}
+                </h3>
                 <span className="text-xs text-gray-500">Super Admin</span>
               </div>
             </div>

@@ -82,6 +82,8 @@
   --color-applicationBg: #f3f1ff;
   --color-figmaGray: #f0f0f0;
 
+
+  --color-upcoming:rgba(195, 242, 238, 0.7);
   --color-tableHeader: #fcfcfd;
 
   --color-background: var(--background);
@@ -146,5 +148,17 @@
 
   .custom_otp_input {
     @apply border-0 border-b-2 border-gray-500 focus:outline-none  shadow-none focus:shadow-none rounded-none focus:ring-0 w-full md:w-[400px] placeholder:text-xl placeholder:tracking-wider;
+  }
+
+  .file-preview-container {
+    @apply relative;
+  }
+
+  .file-preview-container:hover .remove-button {
+    @apply opacity-100;
+  }
+
+  .remove-button {
+    @apply opacity-0 transition-opacity duration-200;
   }
 }

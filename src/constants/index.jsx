@@ -33,9 +33,69 @@ export const employeeTableHeader = [
   { id: 1, name: "SN" },
   { id: 2, name: "Member Name" },
   { id: 3, name: "Join Date" },
-  { id: 4, name: "DOB" },
+  { id: 4, name: "Email" },
   { id: 5, name: "Type" },
-  { id: 6, name: "Ph. Number" },
   { id: 7, name: "Status" },
   { id: 8, name: "Actions" },
+];
+
+export const countryData = [
+  { id: 1, name: "Nepal" },
+  { id: 2, name: "India" },
+  { id: 3, name: "United States" },
+  { id: 4, name: "United Kingdom" },
+  { id: 5, name: "Canada" },
+  { id: 6, name: "Australia" },
+];
+
+export const timezoneData = [
+  {
+    name: "Pacific Standard Time",
+    abbreviation: "PST",
+    utc_offset: "-08:00",
+  },
+  {
+    name: "Nepal Standard Time",
+    abbreviation: "NST",
+    utc_offset: "+05:45",
+  },
+  {
+    name: "Eastern Standard Time",
+    abbreviation: "EST",
+    utc_offset: "-05:00",
+  },
+  {
+    name: "Greenwich Mean Time",
+    abbreviation: "GMT",
+    utc_offset: "±00:00",
+  },
+  {
+    name: "Central European Time",
+    abbreviation: "CET",
+    utc_offset: "+01:00",
+  },
+];
+
+export const jobType = [
+  {
+    id: 1,
+    name: "Casual",
+  },
+  { id: 2, name: "Job" },
+];
+
+export const experienceLevel = [
+  { id: 1, name: "Less than 1 year" },
+  { id: 2, name: "1-2 years" },
+  { id: 3, name: "2-5 years" },
+  { id: 4, name: "More than 5 years" },
+];
+
+export const overviewTable = [
+  { id: 1, name: "SN" },
+  { id: 2, name: "Member Name" },
+  { id: 3, name: "Email" },
+  { id: 4, name: "Joined At" },
+  { id: 5, name: "Type" },
+  { id: 6, name: "Status" },
 ];

@@ -5,30 +5,37 @@ import inbox from "../assets/inbox.png";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react"; 
+import { Plus, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useInviteWorkspace } from "@/services/workspace";
+import { getInitial } from "@/utils/getInitial";
 
 const avatarColors = [
-  { bg: 'bg-red-500', chip: 'bg-red-50' },
-  { bg: 'bg-blue-500', chip: 'bg-blue-50' },
-  { bg: 'bg-green-500', chip: 'bg-green-50' },
-  { bg: 'bg-yellow-500', chip: 'bg-yellow-50' },
-  { bg: 'bg-purple-500', chip: 'bg-purple-50' },
-  { bg: 'bg-pink-500', chip: 'bg-pink-50' },
-  { bg: 'bg-indigo-500', chip: 'bg-indigo-50' },
-  { bg: 'bg-orange-500', chip: 'bg-orange-50' },
+  { bg: "bg-red-500", chip: "bg-red-50" },
+  { bg: "bg-blue-500", chip: "bg-blue-50" },
+  { bg: "bg-green-500", chip: "bg-green-50" },
+  { bg: "bg-yellow-500", chip: "bg-yellow-50" },
+  { bg: "bg-purple-500", chip: "bg-purple-50" },
+  { bg: "bg-pink-500", chip: "bg-pink-50" },
+  { bg: "bg-indigo-500", chip: "bg-indigo-50" },
+  { bg: "bg-orange-500", chip: "bg-orange-50" },
 ];
 
 const getColors = (index) => {
   return avatarColors[index % avatarColors.length];
 };
 
-const getInitial = (email) => {
-  return email.charAt(0).toUpperCase();
-};
-
 const WorkspaceInvitation = () => {
   const [email, setEmail] = useState("");
   const [emailList, setEmailList] = useState([]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const workspaceId = location.state?.id || "";
+  // console.log(workspaceId);
+
+  const mutation = useInviteWorkspace();
 
   const handleAddEmail = () => {
     if (email && email.includes("@")) {
@@ -42,8 +49,12 @@ const WorkspaceInvitation = () => {
   };
 
   const handleSendInvitations = () => {
-    // Handle sending invitations
-    console.log("Sending invitations to:", emailList);
+    /*  console.log("Sending invitations to:", emailList); */
+    mutation.mutate(
+      { emails: emailList, workspace_id: workspaceId },
+      { onSuccess: () => navigate("/workspacesetupdone") }
+    );
+    setEmailList([]);
   };
 
   return (
@@ -65,8 +76,12 @@ const WorkspaceInvitation = () => {
                 <Input
                   type="email"
                   value={email}
-                  className='h-10 bg-gray-50'
-                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={mutation.isPending}
+                  className="h-10 bg-gray-50"
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setEmail(e.target.value);
+                  }}
                   onKeyPress={(e) => {
                     if (e.key === "Enter") handleAddEmail();
                   }}
@@ -76,6 +91,7 @@ const WorkspaceInvitation = () => {
                   onClick={handleAddEmail}
                   variant="outline"
                   size="icon"
+                  disabled={mutation.isPending}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -112,13 +128,17 @@ const WorkspaceInvitation = () => {
               {/* Action Buttons */}
               <div className="flex gap-3 mt-8">
                 <Button
-                className='flex-1 font-semibold cursor-pointer'
+                  className="flex-1 font-semibold cursor-pointer"
                   onClick={handleSendInvitations}
-                  disabled={emailList.length === 0}
+                  disabled={emailList.length === 0 || mutation.isPending}
                 >
                   Send Request
                 </Button>
-                <Button variant="outline" className='flex-1 text-figmaPrimary border-figmaPrimary hover:bg-figmaBackground'>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/workspacesetupdone")}
+                  className="flex-1 text-figmaPrimary border-figmaPrimary hover:bg-figmaBackground"
+                >
                   Skip
                 </Button>
               </div>

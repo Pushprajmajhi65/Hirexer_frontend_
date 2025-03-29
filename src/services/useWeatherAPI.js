@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 async function weatherAPI({ queryKey }) {
   const [, location] = queryKey;
   const response = await axios.get(
-    `http://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${location}&aqi=no`
+    `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${location}&aqi=no`
   );
   return response.data;
 }

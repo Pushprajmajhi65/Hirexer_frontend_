@@ -1,7 +1,8 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import inboxImage from "../assets/inbox.png";
-import { Card, CardContent } from "@/components/ui/card";
 import { useForm, Controller } from "react-hook-form";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,13 +14,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import toast from "react-hot-toast";
+import { useCreateWorkspace, useGetUserWorkspace } from "@/services/workspace";
 
 const CreateWorkspace = () => {
   const { register, reset, control, handleSubmit } = useForm();
+  const navigate = useNavigate();
+
+  const mutation = useCreateWorkspace();
+  const { data: workspaceData, isLoading } = useGetUserWorkspace();
+  /* console.log(workspaceData); */
 
   const onSubmit = (data) => {
-    console.log(data);
+    /*   console.log(data); */
+    mutation.mutate(
+      {
+        name: data.name,
+        email: data.email,
+        industry: data.industry,
+        phone_number: data.phone_number,
+        country: data.country,
+      },
+      {
+        onSuccess: () => {
+          reset();
+        },
+      }
+    );
   };
   return (
     <div className="bg-figmaBackground min-h-screen px-4 xl:px-0 flex items-center justify-center">
@@ -41,6 +61,7 @@ const CreateWorkspace = () => {
             <Wrapper>
               <Label className="font-semibold">Workspace Name</Label>
               <Input
+                disabled={mutation.isPending}
                 type="text"
                 className="p-5 placeholder:text-[15px] bg-gray-50"
                 placeholder="Your workspace name"
@@ -55,6 +76,7 @@ const CreateWorkspace = () => {
               <Input
                 className="p-5 placeholder:text-[15px] bg-gray-50"
                 type="email"
+                disabled={mutation.isPending}
                 {...register("email", {
                   required: "An Email address is required",
                 })}
@@ -65,6 +87,7 @@ const CreateWorkspace = () => {
               <Label className="font-semibold">Country</Label>
               <Input
                 type="text"
+                disabled={mutation.isPending}
                 className="p-5 placeholder:text-[15px] bg-gray-50"
                 {...register("country", { required: "Country is required" })}
               />
@@ -74,6 +97,7 @@ const CreateWorkspace = () => {
               <Label className="font-semibold">Industry</Label>
               <Controller
                 name="industry"
+                disabled={mutation.isPending}
                 control={control}
                 rules={{ required: "Industry is required" }}
                 render={({ field }) => (
@@ -82,7 +106,7 @@ const CreateWorkspace = () => {
                       <SelectValue placeholder="Select an industry" />
                     </SelectTrigger>
                     <SelectContent>
-                      {IndustryNames.map((el) => (
+                    {IndustryNames.map((el) => (
                         <SelectItem value={el.name} key={el.id}>
                           {el.name}
                         </SelectItem>
@@ -97,6 +121,7 @@ const CreateWorkspace = () => {
               <Label className="font-semibold">Phone Number</Label>
               <Input
                 type="text"
+                disabled={mutation.isPending}
                 className="p-5 placeholder:text-[15px] bg-gray-50"
                 placeholder="+977 9800000000"
                 {...register("phone_number", {
@@ -105,13 +130,19 @@ const CreateWorkspace = () => {
               />
             </Wrapper>
             <Button
+              disabled={mutation.isPending}
               type="submit"
               className="w-full cursor-pointer font-semibold "
             >
-              Next
+              {mutation.isPending ? "Creating workspace" : " Next"}
             </Button>
           </form>
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate("/")}
+            disabled={isLoading || workspaceData.length === 0}
+          >
             Skip
           </Button>
         </CardContent>
