@@ -16,6 +16,8 @@ export const getStatusColor = (status) => {
       return "bg-teal-100 text-teal-700";
     case "inactive":
       return "bg-gray-300 text-gray-800";
+    case "transferred":
+      return "bg-indigo-100 text-indigo-700";
     default:
       return "bg-gray-100 text-gray-700";
   }

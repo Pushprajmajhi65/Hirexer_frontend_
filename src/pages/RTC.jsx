@@ -3,15 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { connect } from 'twilio-video';
 import { toast } from 'react-hot-toast';
 import {
-  FaMicrophone,
-  FaMicrophoneSlash,
-  FaVideo,
-  FaVideoSlash,
-  FaUserFriends,
-  FaPhoneSlash,
-  FaCog,
-  FaDesktop,
-  FaComments,
+  FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash,
+  FaUserFriends, FaPhoneSlash, FaCog
 } from 'react-icons/fa';
 
 const RTC = () => {
@@ -19,25 +12,20 @@ const RTC = () => {
   const [participants, setParticipants] = useState([]);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [deviceSettings, setDeviceSettings] = useState({
     audioInput: '',
     videoInput: '',
-    audioOutput: '',
   });
   const [availableDevices, setAvailableDevices] = useState({
     audioInput: [],
     videoInput: [],
-    audioOutput: [],
   });
 
   const localVideoRef = useRef(null);
-  const screenTrackRef = useRef(null);
+  const participantRefs = useRef({});
   const location = useLocation();
-
   const params = new URLSearchParams(location.search);
   const channelName = params.get('channelName');
   const token = params.get('token');
@@ -45,10 +33,8 @@ const RTC = () => {
   useEffect(() => {
     getAvailableDevices();
     connectToRoom();
-
     return () => {
       if (room) {
-        stopScreenSharing();
         room.disconnect();
       }
     };
@@ -60,7 +46,6 @@ const RTC = () => {
       setAvailableDevices({
         audioInput: devices.filter(device => device.kind === 'audioinput'),
         videoInput: devices.filter(device => device.kind === 'videoinput'),
-        audioOutput: devices.filter(device => device.kind === 'audiooutput'),
       });
     } catch (error) {
       toast.error('Failed to get available devices');
@@ -74,13 +59,14 @@ const RTC = () => {
       const roomInstance = await connect(token, {
         name: channelName,
         audio: true,
-        video: { width: 1280, height: 720 },
+        video: { width: 640, height: 480 },
         dominantSpeaker: true,
       });
 
       setRoom(roomInstance);
       setupLocalVideo(roomInstance);
       setupParticipantHandlers(roomInstance);
+      setupExistingParticipants(roomInstance);
       toast.success('Connected to meeting');
     } catch (error) {
       toast.error('Failed to connect to meeting');
@@ -88,27 +74,66 @@ const RTC = () => {
   };
 
   const setupLocalVideo = (roomInstance) => {
-    const videoTrack = Array.from(roomInstance.localParticipant.videoTracks.values())[0]?.track;
-    if (videoTrack && localVideoRef.current) {
-      const element = videoTrack.attach();
-      localVideoRef.current.innerHTML = '';
-      localVideoRef.current.appendChild(element);
+    if (localVideoRef.current) {
+      const localParticipant = roomInstance.localParticipant;
+      localParticipant.videoTracks.forEach(publication => {
+        if (publication.track) {
+          const element = publication.track.attach();
+          localVideoRef.current.innerHTML = '';
+          localVideoRef.current.appendChild(element);
+        }
+      });
     }
   };
 
   const setupParticipantHandlers = (roomInstance) => {
-    roomInstance.on('participantConnected', participant => {
-      setParticipants(prev => [...prev, participant]);
+    const handleParticipantConnected = (participant) => {
+      setParticipants(prevParticipants => [...prevParticipants, participant]);
+      handleParticipantTracks(participant);
       toast.success(`${participant.identity} joined`);
-    });
+    };
 
-    roomInstance.on('participantDisconnected', participant => {
-      setParticipants(prev => prev.filter(p => p !== participant));
+    const handleParticipantDisconnected = (participant) => {
+      setParticipants(prevParticipants => 
+        prevParticipants.filter(p => p !== participant)
+      );
+      if (participantRefs.current[participant.sid]) {
+        participantRefs.current[participant.sid].innerHTML = '';
+        delete participantRefs.current[participant.sid];
+      }
       toast.info(`${participant.identity} left`);
-    });
+    };
 
+    roomInstance.on('participantConnected', handleParticipantConnected);
+    roomInstance.on('participantDisconnected', handleParticipantDisconnected);
+  };
+
+  const handleParticipantTracks = (participant) => {
+    const trackSubscribed = (track) => {
+      if (participantRefs.current[participant.sid]) {
+        const element = track.attach();
+        participantRefs.current[participant.sid].appendChild(element);
+      }
+    };
+
+    const trackUnsubscribed = (track) => {
+      track.detach().forEach(element => element.remove());
+    };
+
+    participant.on('trackSubscribed', trackSubscribed);
+    participant.on('trackUnsubscribed', trackUnsubscribed);
+
+    participant.tracks.forEach(publication => {
+      if (publication.isSubscribed) {
+        trackSubscribed(publication.track);
+      }
+    });
+  };
+
+  const setupExistingParticipants = (roomInstance) => {
     roomInstance.participants.forEach(participant => {
-      setParticipants(prev => [...prev, participant]);
+      setParticipants(prevParticipants => [...prevParticipants, participant]);
+      handleParticipantTracks(participant);
     });
   };
 
@@ -129,30 +154,6 @@ const RTC = () => {
       });
       setVideoEnabled(!videoEnabled);
       toast.success(videoEnabled ? 'Camera off' : 'Camera on');
-    }
-  };
-
-  const startScreenSharing = async () => {
-    try {
-      const screenTrack = await navigator.mediaDevices.getDisplayMedia();
-      const videoTrack = screenTrack.getVideoTracks()[0];
-      screenTrackRef.current = videoTrack;
-      room.localParticipant.publishTrack(videoTrack);
-      setIsScreenSharing(true);
-      toast.success('Screen sharing started');
-      videoTrack.onended = stopScreenSharing;
-    } catch (error) {
-      toast.error('Failed to share screen');
-    }
-  };
-
-  const stopScreenSharing = () => {
-    if (screenTrackRef.current) {
-      room.localParticipant.unpublishTrack(screenTrackRef.current);
-      screenTrackRef.current.stop();
-      screenTrackRef.current = null;
-      setIsScreenSharing(false);
-      toast.success('Screen sharing stopped');
     }
   };
 
@@ -211,10 +212,10 @@ const RTC = () => {
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-140px)]">
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-140px)]">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
           <div className="relative bg-gray-800 rounded-xl overflow-hidden aspect-video shadow-lg">
-            <div ref={localVideoRef} className="w-full h-full" />
+            <div ref={localVideoRef} className="w-full h-full object-cover" />
             <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full">
               You (Host)
             </div>
@@ -222,7 +223,10 @@ const RTC = () => {
 
           {participants.map((participant) => (
             <div key={participant.sid} className="relative bg-gray-800 rounded-xl overflow-hidden aspect-video shadow-lg">
-              <div id={`participant-${participant.sid}`} className="w-full h-full" />
+              <div
+                ref={el => participantRefs.current[participant.sid] = el}
+                className="w-full h-full object-cover"
+              />
               <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full">
                 {participant.identity}
               </div>
@@ -231,9 +235,8 @@ const RTC = () => {
         </div>
 
         {showSettings && (
-          <div className="w-80 bg-gray-800 bg-opacity-90 p-6 border-l border-gray-700">
+          <div className="w-full md:w-80 bg-gray-800 bg-opacity-90 p-6 border-l border-gray-700">
             <h2 className="text-white text-lg font-bold mb-6">Device Settings</h2>
-            
             <div className="space-y-6">
               <div>
                 <label className="text-gray-300 text-sm block mb-2">Microphone</label>
@@ -249,7 +252,6 @@ const RTC = () => {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="text-gray-300 text-sm block mb-2">Camera</label>
                 <select
@@ -269,14 +271,12 @@ const RTC = () => {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-90 p-6 border-t border-gray-700">
-        <div className="flex justify-center items-center space-x-6">
+      <div className="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-90 p-4 md:p-6 border-t border-gray-700">
+        <div className="flex justify-center items-center space-x-4 md:space-x-6">
           <button
             onClick={toggleAudio}
-            className={`p-4 rounded-full transition-all transform hover:scale-110 ${
-              audioEnabled
-                ? 'bg-gray-700 text-white hover:bg-gray-600'
-                : 'bg-red-500 text-white hover:bg-red-600'
+            className={`p-3 md:p-4 rounded-full transition-all transform hover:scale-110 ${
+              audioEnabled ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-red-500 text-white hover:bg-red-600'
             }`}
           >
             {audioEnabled ? <FaMicrophone size={20} /> : <FaMicrophoneSlash size={20} />}
@@ -284,40 +284,16 @@ const RTC = () => {
 
           <button
             onClick={toggleVideo}
-            className={`p-4 rounded-full transition-all transform hover:scale-110 ${
-              videoEnabled
-                ? 'bg-gray-700 text-white hover:bg-gray-600'
-                : 'bg-red-500 text-white hover:bg-red-600'
+            className={`p-3 md:p-4 rounded-full transition-all transform hover:scale-110 ${
+              videoEnabled ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-red-500 text-white hover:bg-red-600'
             }`}
           >
             {videoEnabled ? <FaVideo size={20} /> : <FaVideoSlash size={20} />}
           </button>
 
-          {/* <button
-            onClick={isScreenSharing ? stopScreenSharing : startScreenSharing}
-            className={`p-4 rounded-full transition-all transform hover:scale-110 ${
-              isScreenSharing
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
-            }`}
-          >
-            <FaDesktop size={20} />
-          </button> */}
-
-        {/*   <button
-            onClick={() => setShowChat(!showChat)}
-            className={`p-4 rounded-full transition-all transform hover:scale-110 ${
-              showChat
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-700 text-white hover:bg-gray-600'
-            }`}
-          >
-            <FaComments size={20} />
-          </button> */}
-
           <button
             onClick={() => setIsLeaving(true)}
-            className="p-4 rounded-full bg-red-500 text-white transition-all transform hover:scale-110 hover:bg-red-600"
+            className="p-3 md:p-4 rounded-full bg-red-500 text-white transition-all transform hover:scale-110 hover:bg-red-600"
           >
             <FaPhoneSlash size={20} />
           </button>
@@ -325,20 +301,20 @@ const RTC = () => {
       </div>
 
       {isLeaving && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-8 rounded-xl shadow-xl max-w-md w-full mx-4">
-            <h2 className="text-white text-2xl font-bold mb-4">Leave Meeting?</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 p-6 md:p-8 rounded-xl shadow-xl max-w-md w-full">
+            <h2 className="text-white text-xl md:text-2xl font-bold mb-4">Leave Meeting?</h2>
             <p className="text-gray-300 mb-6">Are you sure you want to leave the meeting?</p>
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setIsLeaving(false)}
-                className="px-6 py-2 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleLeaveMeeting}
-                className="px-6 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
               >
                 Leave
               </button>

@@ -17,9 +17,49 @@ import { jobStatuses } from "@/constants";
 import toast from "react-hot-toast";
 import { useUpdateApplicationStatus } from "@/services/post";
 
-const EditDialog = ({ onClose, employee }) => {
-  const [status, setStatus] = useState(employee?.status || "");
-const mutation=useUpdateApplicationStatus()
+const EditDialog = ({ onClose, application }) => {
+  const [status, setStatus] = useState(application?.status || "");
+  const mutation = useUpdateApplicationStatus();
+
+
+  const getAvailableStatuses = () => {
+    const currentStatus = application?.status;
+
+    const rejected = jobStatuses.find(status => status.name === "Rejected");
+    
+    switch (currentStatus) {
+      case "Submitted":
+        return jobStatuses.filter(status => 
+          ["Submitted", "In Review", "Rejected"].includes(status.name)
+        );
+      
+      case "In Review":
+        return jobStatuses.filter(status => 
+          ["In Review", "Schedule Meeting", "Rejected"].includes(status.name)
+        );
+      
+      case "Schedule Meeting":
+        return jobStatuses.filter(status => 
+          ["Schedule Meeting", "Approved", "Rejected"].includes(status.name)
+        );
+      
+      case "Pending":
+        return jobStatuses.filter(status => 
+          ["Pending", "Rejected"].includes(status.name)
+        );
+      
+      case "Approved":
+        return jobStatuses.filter(status => 
+          ["Approved", "Rejected"].includes(status.name)
+        );
+      
+      case "Rejected":
+        return [rejected];
+      
+      default:
+        return jobStatuses;
+    }
+  };
 
   const handleStatusUpdate = () => {
     if (!status) {
@@ -31,11 +71,21 @@ const mutation=useUpdateApplicationStatus()
       return;
     }
 
-/*     console.log(employee.id,status.toLowerCase()) */
+  
+    const availableStatuses = getAvailableStatuses().map(s => s.name);
+    if (!availableStatuses.includes(status)) {
+      toast({
+        title: "Invalid Status Change",
+        description: `Cannot change status from ${application.status} to ${status}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     mutation.mutate(
       {
-        memberId: employee.id,
-        status: status.toLowerCase(),
+        application_id: application.id,
+        status: status,
       },
       {
         onSuccess: () => {
@@ -48,9 +98,9 @@ const mutation=useUpdateApplicationStatus()
   return (
     <div className="space-y-4">
       <DialogHeader>
-        <DialogTitle>Update Member Status</DialogTitle>
+        <DialogTitle>Update Application Status</DialogTitle>
         <DialogDescription>
-          Change the status for {employee?.username}
+          Change the status of application
         </DialogDescription>
       </DialogHeader>
 
@@ -61,7 +111,7 @@ const mutation=useUpdateApplicationStatus()
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
-            {jobStatuses.map((status) => (
+            {getAvailableStatuses().map((status) => (
               <SelectItem key={status.id} value={status.name}>
                 {status.name}
               </SelectItem>

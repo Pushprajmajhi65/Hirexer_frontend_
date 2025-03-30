@@ -58,7 +58,6 @@ const EmployeeTable = () => {
     setIsDeleteDialogOpen(true);
   };
 
-
   if (error) {
     return (
       <div className="text-center py-8 text-red-600">
@@ -67,10 +66,8 @@ const EmployeeTable = () => {
     );
   }
 
-
   const workspaceData = data?.find((el) => el.name === selectedWorkspace?.name);
   const members = workspaceData?.members_details || [];
-
 
   const filteredData = members.filter((member) =>
     member.username?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -101,14 +98,11 @@ const EmployeeTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-      
-            {isLoading && (
-              Array(5).fill(0).map((_, index) => (
-                <TableRowSkeleton key={index} />
-              ))
-            )}
+            {isLoading &&
+              Array(5)
+                .fill(0)
+                .map((_, index) => <TableRowSkeleton key={index} />)}
 
-      
             {!isLoading && !selectedWorkspace && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
@@ -117,7 +111,6 @@ const EmployeeTable = () => {
               </TableRow>
             )}
 
-    
             {!isLoading && selectedWorkspace && members.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
@@ -126,7 +119,6 @@ const EmployeeTable = () => {
               </TableRow>
             )}
 
-  
             {!isLoading && filteredData.length === 0 && searchQuery && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
@@ -135,33 +127,36 @@ const EmployeeTable = () => {
               </TableRow>
             )}
 
-            {!isLoading && filteredData.map((member, index) => (
-              <TableRow key={member.id} className="border-b hover:bg-gray-50">
-                <TableCell>{index+1}</TableCell>
-                <TableCell>{member.username}</TableCell>
-                <TableCell>{new Date(member.joined_at).toLocaleDateString()}</TableCell>
-                <TableCell>{member.email}</TableCell>
-                <TableCell>{member.role}</TableCell>
-              
-                <TableCell>
-                  <EmployeeStatus status={member.status} />
-                </TableCell>
-                <TableCell className="flex gap-5">
-                  <button
-                    onClick={() => handleEditClick(member)}
-                    className="text-blue-500 hover:text-blue-700 transition-colors"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(member)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                  >
-                    <Trash2Icon className="h-4 w-4" />
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {!isLoading &&
+              filteredData.map((member, index) => (
+                <TableRow key={member.id} className="border-b hover:bg-gray-50">
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{member.username}</TableCell>
+                  <TableCell>
+                    {new Date(member.joined_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{member.email}</TableCell>
+                  <TableCell>{member.role}</TableCell>
+
+                  <TableCell>
+                    <EmployeeStatus status={member.status} />
+                  </TableCell>
+                  <TableCell className="flex gap-5">
+                    <button
+                      onClick={() => handleEditClick(member)}
+                      className="text-blue-500 hover:text-blue-700 transition-colors"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(member)}
+                      className="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      <Trash2Icon className="h-4 w-4" />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
@@ -169,8 +164,8 @@ const EmployeeTable = () => {
       {/* Dialogs */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="w-[400px]">
-          <DeleteDialog 
-            onClose={handleCloseDialog} 
+          <DeleteDialog
+            onClose={handleCloseDialog}
             employee={selectedEmployee}
           />
         </DialogContent>
@@ -178,8 +173,8 @@ const EmployeeTable = () => {
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
-          <EditDialog 
-            onClose={handleCloseEditDialog} 
+          <EditDialog
+            onClose={handleCloseEditDialog}
             employee={selectedEmployee}
           />
         </DialogContent>

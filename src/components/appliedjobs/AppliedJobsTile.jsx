@@ -17,26 +17,26 @@ import { Button } from "../ui/button";
 	} */
 
 const AppliedJobsTile = ({ el }) => {
+  console.log(el.application_status)
   return (
     <Card>
       <CardContent className="flex flex-col ">
         <span className="flex  justify-end">
-          {" "}
-          <Badge className={getStatusColor("rejected")}>
-            {el.appication_status}
+          <Badge className={getStatusColor(el.application_status)}>
+            {el.application_status}
           </Badge>
         </span>
         <section className="pt-4 space-y-1">
           <h2 className="text-[15px] font-[600] text-primary/90">
             Workspace:
             <span className="text-muted-foreground text-[12px]">
-              {e.post.workspace.name}
+              {el.post.workspace.name}
             </span>
           </h2>
           <h2 className="text-[15px] font-[600] text-primary/90">
             Description:
             <span className="text-muted-foreground text-[12px]">
-              {e.post.post_description}
+              {el.post.post_description}
             </span>
           </h2>
           <h2 className="text-[15px] font-[600] text-primary/90">
@@ -59,7 +59,7 @@ const AppliedJobsTile = ({ el }) => {
           </h2>
         </section>
         <section className="pt-3 flex items-center justify-between">
-          <a href={el.cv_url} className="">
+          <a href={el.cv_url} className="text-figmaPrimary">
             View Details
           </a>
           <Button variant="destructive">Delete</Button>

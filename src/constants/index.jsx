@@ -11,7 +11,7 @@ export const DashBoardMenuItems = [
   {
     icon: <LayoutGrid size={20} />,
     name: "Overview",
-    allowedRoles: ["headmember", "member"], 
+    allowedRoles: ["headmember", "member"],
   },
   {
     icon: <Newspaper size={20} />,
@@ -26,17 +26,17 @@ export const DashBoardMenuItems = [
   {
     icon: <Users size={20} />,
     name: "Employee",
-    allowedRoles: ["headmember"], 
+    allowedRoles: ["headmember"],
   },
-  { 
-    icon: <FileText size={20} />, 
+  {
+    icon: <FileText size={20} />,
     name: "Applications",
-    allowedRoles: ["headmember"], 
+    allowedRoles: ["headmember"],
   },
-  { 
-    icon: <Briefcase size={20} />, 
+  {
+    icon: <Briefcase size={20} />,
     name: "Applied Jobs",
-    allowedRoles: ["member"], 
+    allowedRoles: ["member"],
   },
 ];
 
@@ -123,13 +123,13 @@ export const overviewTable = [
 export const employeeStatus = [
   {
     id: 1,
-    name: "Pending",
+    name: "InActive",
   },
   {
     id: 2,
     name: "Active",
   },
-  { id: 3, name: "Inactive" },
+  { id: 3, name: "Transferred" },
 ];
 
 export const jobStatuses = [

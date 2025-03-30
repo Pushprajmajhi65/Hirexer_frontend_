@@ -10,6 +10,13 @@ import { X, Plus, Mail } from "lucide-react";
 import { useCreateMeeting } from "@/services/meeting";
 
 const CreateMeeting = ({ onClose }) => {
+  // Get current date and time in ISO format
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  };
+
   const {
     register,
     handleSubmit,
@@ -17,6 +24,7 @@ const CreateMeeting = ({ onClose }) => {
     reset,
     control,
     formState: { errors },
+    getValues,
   } = useForm({
     defaultValues: {
       title: "",
@@ -35,6 +43,7 @@ const CreateMeeting = ({ onClose }) => {
   });
 
   const memberEmails = watch("members");
+  const startTime = watch("start_time");
   const isLastEmailEmpty =
     memberEmails[memberEmails.length - 1]?.email.trim() === "";
 
@@ -42,12 +51,18 @@ const CreateMeeting = ({ onClose }) => {
     if (!isLastEmailEmpty) append({ email: "" });
   };
 
+  const validateEndTime = (value) => {
+    const startTimeValue = getValues("start_time");
+    if (!startTimeValue) return true;
+    return new Date(value) > new Date(startTimeValue) || "End time must be after start time";
+  };
+
   const onSubmit = (data) => {
     const cleanData = {
       ...data,
       members: data.members.filter((member) => member.email.trim() !== ""),
     };
-     console.log(cleanData); 
+    
     mutation.mutate(
       {
         title: cleanData.title,
@@ -66,7 +81,7 @@ const CreateMeeting = ({ onClose }) => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto  bg-white dark:bg-gray-900 rounded-lg ">
+    <div className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-lg">
       <DialogHeader className="mb-6">
         <DialogTitle className="text-2xl font-semibold text-gray-800 dark:text-white">
           📅 Create a Meeting
@@ -89,16 +104,33 @@ const CreateMeeting = ({ onClose }) => {
           <Label>Start Time</Label>
           <Input
             type="datetime-local"
-            {...register("start_time", { required: "Start time is required" })}
+            min={getCurrentDateTime()}
+            {...register("start_time", { 
+              required: "Start time is required",
+              min: {
+                value: getCurrentDateTime(),
+                message: "Cannot select a past date and time"
+              }
+            })}
           />
+          {errors.start_time && (
+            <p className="text-red-500 text-sm">{errors.start_time.message}</p>
+          )}
         </Wrapper>
 
         <Wrapper>
           <Label>End Time</Label>
           <Input
             type="datetime-local"
-            {...register("end_time", { required: "End time is required" })}
+            min={startTime || getCurrentDateTime()}
+            {...register("end_time", { 
+              required: "End time is required",
+              validate: validateEndTime
+            })}
           />
+          {errors.end_time && (
+            <p className="text-red-500 text-sm">{errors.end_time.message}</p>
+          )}
         </Wrapper>
 
         <Wrapper>
@@ -110,6 +142,9 @@ const CreateMeeting = ({ onClose }) => {
             })}
             placeholder="Enter meeting description"
           />
+          {errors.description && (
+            <p className="text-red-500 text-sm">{errors.description.message}</p>
+          )}
         </Wrapper>
 
         <div className="space-y-4">
@@ -164,7 +199,7 @@ const CreateMeeting = ({ onClose }) => {
             Cancel
           </Button>
           <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "Creating" : "Create Meeting"}
+            {mutation.isPending ? "Creating..." : "Create Meeting"}
           </Button>
         </div>
       </form>

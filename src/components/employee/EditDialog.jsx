@@ -15,11 +15,15 @@ import {
 } from "../ui/select";
 import { employeeStatus } from "@/constants";
 import toast from "react-hot-toast";
-import { useUpdateApplicationStatus } from "@/services/post";
+import { useUpdateMemberStatus } from "@/services/post";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 const EditDialog = ({ onClose, employee }) => {
   const [status, setStatus] = useState(employee?.status || "");
-  const mutation = useUpdateApplicationStatus();
+  const mutation = useUpdateMemberStatus();
+
+  const { selectedWorkspace } = useWorkspace();
+  /*   console.log(selectedWorkspace.id); */
 
   const handleStatusUpdate = () => {
     if (!status) {
@@ -31,11 +35,13 @@ const EditDialog = ({ onClose, employee }) => {
       return;
     }
 
-    console.log(employee.id,status.toLowerCase())
+    /*     console.log(employee.id, status.toLowerCase()); */
+    console.log(selectedWorkspace.id, employee.id, status);
     mutation.mutate(
       {
-        memberId: employee.id,
-        status: status.toLowerCase(),
+        workspace_id: selectedWorkspace.id,
+        member_id: employee.id,
+        new_status: status,
       },
       {
         onSuccess: () => {

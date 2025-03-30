@@ -66,7 +66,7 @@ async function applyPost({ post, email, experience_level, applied_at, cv }) {
       email,
       experience_level,
       applied_at,
-      cv
+      cv,
     },
     {
       headers: {
@@ -87,7 +87,7 @@ export function useApplyPost() {
       toast.success("Applied for the post successfully");
     },
     onError: (error) => {
-      console.log(error)
+      console.log(error);
       toast.error(error?.response.data.error || "Failed to apply for the post");
     },
   });
@@ -105,23 +105,23 @@ export function useGetUserApplications() {
   });
 }
 
-async function updateApplicationStatus({ application_id, status }) {
+async function updateMemberStatus({ workspace_id, member_id, new_status }) {
   const response = await axiosInstance.post(
-    `applications/${application_id}/status/`,
-    { status }
+    `api/workspaces/${workspace_id}/change_member_status/`,
+    { member_id, new_status }
   );
   return response.data;
 }
 
-export function useUpdateApplicationStatus() {
+export function useUpdateMemberStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: updateApplicationStatus,
+    mutationFn: updateMemberStatus,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["getPostApplications"] });
-      queryClient.invalidateQueries({ queryKey: ["getMyApplications"] });
+      /*    queryClient.invalidateQueries({ queryKey: ["getPostApplications"] }); */
+      /*   queryClient.invalidateQueries({ queryKey: ["getMyApplications"] }); */
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-      queryClient.invalidateQueries({ queryKey: ["workspace"] });
+      queryClient.refetchQueries({ queryKey: ["workspace"] });
       toast.success("Status updated successfully");
     },
     onError: (error) => {
@@ -144,5 +144,31 @@ export function useGetWorkspacePosts(workspace_id) {
     queryKey: ["getWorkspacePosts", workspace_id],
     queryFn: getWorkspacePosts,
     enabled: !!workspace_id,
+  });
+}
+
+async function updateApplicationStatus({ application_id, status }) {
+  const response = await axiosInstance.post(
+    `applications/${application_id}/status/`,
+    { status }
+  );
+  return response.data;
+}
+
+export function useUpdateApplicationStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateApplicationStatus,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["getWorkspacePosts"] });
+      queryClient.invalidateQueries({ queryKey: ["getMyApplications"] });
+      queryClient.invalidateQueries({ queryKey: ["getPostApplications"] });
+      queryClient.invalidateQueries({ queryKey: ["getPosts"] });
+      toast.success(data?.message || "Status updated successfully");
+    },
+    onError: (error) => {
+      console.log(error);
+      toast.error(error?.response?.data?.error || "Failed updating status");
+    },
   });
 }

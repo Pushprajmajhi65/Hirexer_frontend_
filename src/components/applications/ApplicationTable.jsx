@@ -120,7 +120,7 @@ const ApplicationTable = () => {
                   <Edit className="text-figmaPrimary" size={20}/>
                 </DialogTrigger>
                 <DialogContent>
-                  <EditDialog employee={application} onClose={handleClose} />
+                  <EditDialog application={application} onClose={handleClose} />
                 </DialogContent>
               </Dialog>
             </TableCell>
