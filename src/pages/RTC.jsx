@@ -59,7 +59,7 @@ const RTC = () => {
       const roomInstance = await connect(token, {
         name: channelName,
         audio: true,
-        video: { width: 640, height: 480 },
+        video: { width: 1280, height: 720 },
         dominantSpeaker: true,
       });
 
@@ -79,6 +79,7 @@ const RTC = () => {
       localParticipant.videoTracks.forEach(publication => {
         if (publication.track) {
           const element = publication.track.attach();
+          element.className = 'w-full h-full object-cover';
           localVideoRef.current.innerHTML = '';
           localVideoRef.current.appendChild(element);
         }
@@ -112,6 +113,9 @@ const RTC = () => {
     const trackSubscribed = (track) => {
       if (participantRefs.current[participant.sid]) {
         const element = track.attach();
+        if (track.kind === 'video') {
+          element.className = 'w-full h-full object-cover';
+        }
         participantRefs.current[participant.sid].appendChild(element);
       }
     };
@@ -135,6 +139,14 @@ const RTC = () => {
       setParticipants(prevParticipants => [...prevParticipants, participant]);
       handleParticipantTracks(participant);
     });
+  };
+
+  const getGridColumns = () => {
+    const totalParticipants = participants.length + 1;
+    if (totalParticipants <= 1) return 'grid-cols-1';
+    if (totalParticipants <= 2) return 'md:grid-cols-2';
+    if (totalParticipants <= 4) return 'md:grid-cols-2 lg:grid-cols-2';
+    return 'md:grid-cols-2 lg:grid-cols-3';
   };
 
   const toggleAudio = () => {
@@ -213,9 +225,9 @@ const RTC = () => {
       </div>
 
       <div className="flex flex-col md:flex-row h-[calc(100vh-140px)]">
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+        <div className={`flex-1 grid ${getGridColumns()} gap-4 p-4`}>
           <div className="relative bg-gray-800 rounded-xl overflow-hidden aspect-video shadow-lg">
-            <div ref={localVideoRef} className="w-full h-full object-cover" />
+            <div ref={localVideoRef} className="w-full h-full" />
             <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full">
               You (Host)
             </div>
@@ -225,7 +237,7 @@ const RTC = () => {
             <div key={participant.sid} className="relative bg-gray-800 rounded-xl overflow-hidden aspect-video shadow-lg">
               <div
                 ref={el => participantRefs.current[participant.sid] = el}
-                className="w-full h-full object-cover"
+                className="w-full h-full"
               />
               <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full">
                 {participant.identity}
