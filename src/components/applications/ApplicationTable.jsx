@@ -98,7 +98,7 @@ const ApplicationTable = () => {
           <TableRow key={application.id} className="bg-white hover:bg-gray-50">
             <TableCell>{formatDate(application.applied_at)}</TableCell>
             <TableCell>{application.email}</TableCell>
-            <TableCell>{application.experience_level} years</TableCell>
+            <TableCell>{application.experience_level}</TableCell>
             <TableCell>
               <Badge className={getStatusColor(application.application_status)}>
                 {application.application_status}

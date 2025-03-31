@@ -10,8 +10,7 @@ import {
 } from "../ui/table";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useGetUserWorkspace } from "@/services/workspace";
-import { Skeleton } from "../ui/skeleton"; 
-
+import { Skeleton } from "../ui/skeleton";
 
 const TableRowSkeleton = () => (
   <TableRow className="bg-white">
@@ -27,9 +26,11 @@ const MembersTable = () => {
   const { selectedWorkspace } = useWorkspace();
   const { data, isLoading } = useGetUserWorkspace();
 
+  if (!selectedWorkspace) return <p className="text-center">No workspace selected</p>;
+
   if (isLoading) {
     return (
-      <div className="">
+      <div>
         <Table className="border border-gray-400 rounded-xl overflow-hidden">
           <TableHeader className="bg-tableHeader">
             <TableRow className="h-[40px]">
@@ -51,10 +52,16 @@ const MembersTable = () => {
   }
 
   const workspaceData =
-    data?.find((el) => el.name === selectedWorkspace.name) || {};
+    data?.find((el) => el.name === selectedWorkspace?.name) || {};
+
+  // Filtering only active members
+  const activeMembers =
+    workspaceData.members_details?.filter(
+      (el) => el.role.toLowerCase() === "active"
+    ) || [];
 
   return (
-    <div className="">
+    <div>
       <Table className="border border-gray-400 rounded-xl overflow-hidden">
         <TableHeader className="bg-tableHeader">
           <TableRow className="h-[40px]">
@@ -66,20 +73,23 @@ const MembersTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {workspaceData.members_details?.map((el,index) => (
-            <TableRow key={el.id} className="bg-white hover:bg-gray-50">
-              <TableCell>{index+1}</TableCell>
-              <TableCell>{el.username}</TableCell>
-              <TableCell>{el.email}</TableCell>
-              <TableCell>{new Date(el.joined_at).toLocaleDateString()}</TableCell>
-              <TableCell>{el.role}</TableCell>
-              <TableCell>{el.status}</TableCell>
-            </TableRow>
-          ))}
-          {!workspaceData.members_details?.length && (
+          {activeMembers.length > 0 ? (
+            activeMembers.map((el, index) => (
+              <TableRow key={el.id} className="bg-white hover:bg-gray-50">
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{el.username}</TableCell>
+                <TableCell>{el.email}</TableCell>
+                <TableCell>
+                  {new Date(el.joined_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>{el.role}</TableCell>
+                <TableCell>{el.status}</TableCell>
+              </TableRow>
+            ))
+          ) : (
             <TableRow>
               <TableCell colSpan={overviewTable.length} className="text-center">
-                No members found
+                No active members found
               </TableCell>
             </TableRow>
           )}
