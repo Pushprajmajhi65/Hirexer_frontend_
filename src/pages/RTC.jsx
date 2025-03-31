@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { connect } from "twilio-video";
 import { toast } from "react-hot-toast";
 import {
@@ -13,12 +13,14 @@ import {
 } from "react-icons/fa";
 
 const RTC = () => {
+  const navigate = useNavigate();
   const [room, setRoom] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true);
   const [deviceSettings, setDeviceSettings] = useState({
     audioInput: "",
     videoInput: "",
@@ -36,93 +38,153 @@ const RTC = () => {
   const token = params.get("token");
 
   useEffect(() => {
-    getAvailableDevices();
-    connectToRoom();
-    return () => {
-      if (room) {
-        room.disconnect();
+    if (!channelName || !token) {
+      toast.error("Invalid meeting parameters");
+      navigate("/");
+      return;
+    }
+
+    const initializeRoom = async () => {
+      try {
+        await getAvailableDevices();
+        await connectToRoom();
+      } catch (error) {
+        console.error("Failed to initialize room:", error);
+        toast.error("Failed to join meeting");
+        navigate("/");
+      } finally {
+        setIsConnecting(false);
       }
+    };
+
+    initializeRoom();
+
+    return () => {
+      disconnectAndCleanup();
     };
   }, []);
 
+  const disconnectAndCleanup = () => {
+    if (room) {
+      room.localParticipant.tracks.forEach((publication) => {
+        publication.track.stop();
+        publication.track.detach();
+      });
+      room.disconnect();
+    }
+  };
+
   const getAvailableDevices = async () => {
     try {
+      await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
       const devices = await navigator.mediaDevices.enumerateDevices();
+
+      const audioDevices = devices.filter(
+        (device) => device.kind === "audioinput"
+      );
+      const videoDevices = devices.filter(
+        (device) => device.kind === "videoinput"
+      );
+
       setAvailableDevices({
-        audioInput: devices.filter((device) => device.kind === "audioinput"),
-        videoInput: devices.filter((device) => device.kind === "videoinput"),
+        audioInput: audioDevices,
+        videoInput: videoDevices,
       });
+
+      if (audioDevices.length) {
+        setDeviceSettings((prev) => ({
+          ...prev,
+          audioInput: audioDevices[0].deviceId,
+        }));
+      }
+
+      if (videoDevices.length) {
+        setDeviceSettings((prev) => ({
+          ...prev,
+          videoInput: videoDevices[0].deviceId,
+        }));
+      }
     } catch (error) {
-      toast.error("Failed to get available devices");
+      console.error("Error accessing media devices:", error);
+      toast.error("Unable to access camera or microphone");
+      throw error;
     }
   };
 
   const connectToRoom = async () => {
     try {
-      if (!channelName || !token)
-        throw new Error("Missing connection parameters");
-
       const roomInstance = await connect(token, {
         name: channelName,
         audio: true,
         video: { width: 1280, height: 720 },
         dominantSpeaker: true,
+        networkQuality: { local: 1, remote: 1 },
       });
+
+      roomInstance.on("disconnected", (room, error) => {
+        if (error) {
+          console.error("Room disconnected due to error:", error);
+          toast.error("Disconnected from meeting due to an error");
+        }
+        cleanup();
+      });
+
+      roomInstance.on("participantConnected", handleParticipantConnected);
+      roomInstance.on("participantDisconnected", handleParticipantDisconnected);
+      roomInstance.on("dominantSpeakerChanged", handleDominantSpeakerChanged);
 
       setRoom(roomInstance);
       setupLocalVideo(roomInstance);
-      setupParticipantHandlers(roomInstance);
       setupExistingParticipants(roomInstance);
+
       toast.success("Connected to meeting");
     } catch (error) {
-      toast.error("Failed to connect to meeting");
+      console.error("Error connecting to room:", error);
+      throw error;
     }
   };
 
-  const setupLocalVideo = (roomInstance) => {
-    if (localVideoRef.current) {
-      const localParticipant = roomInstance.localParticipant;
-      localParticipant.videoTracks.forEach((publication) => {
-        if (publication.track) {
-          const element = publication.track.attach();
-          element.className = "w-full h-full object-cover";
-          localVideoRef.current.innerHTML = "";
-          localVideoRef.current.appendChild(element);
-        }
-      });
-    }
+  const handleParticipantConnected = (participant) => {
+    setParticipants((prevParticipants) => [...prevParticipants, participant]);
+    handleParticipantTracks(participant);
+    toast.success(`${participant.identity} joined`);
   };
 
-  const setupParticipantHandlers = (roomInstance) => {
-    const handleParticipantConnected = (participant) => {
-      setParticipants((prevParticipants) => [...prevParticipants, participant]);
-      handleParticipantTracks(participant);
-      toast.success(`${participant.identity} joined`);
-    };
+  const handleParticipantDisconnected = (participant) => {
+    setParticipants((prevParticipants) =>
+      prevParticipants.filter((p) => p !== participant)
+    );
+    if (participantRefs.current[participant.sid]) {
+      participantRefs.current[participant.sid].innerHTML = "";
+      delete participantRefs.current[participant.sid];
+    }
+    toast.info(`${participant.identity} left`);
+  };
 
-    const handleParticipantDisconnected = (participant) => {
-      setParticipants((prevParticipants) =>
-        prevParticipants.filter((p) => p !== participant)
-      );
-      if (participantRefs.current[participant.sid]) {
-        participantRefs.current[participant.sid].innerHTML = "";
-        delete participantRefs.current[participant.sid];
-      }
-      toast.info(`${participant.identity} left`);
-    };
-
-    roomInstance.on("participantConnected", handleParticipantConnected);
-    roomInstance.on("participantDisconnected", handleParticipantDisconnected);
+  const handleDominantSpeakerChanged = (participant) => {
+    if (participant) {
+      console.log("Dominant speaker is:", participant.identity);
+    }
   };
 
   const handleParticipantTracks = (participant) => {
+    if (!participantRefs.current[participant.sid]) {
+      participantRefs.current[participant.sid] = document.createElement("div");
+    }
+
     const trackSubscribed = (track) => {
-      if (participantRefs.current[participant.sid]) {
+      try {
         const element = track.attach();
-        if (track.kind === "video") {
-          element.className = "w-full h-full object-cover";
+        element.style.width = "100%";
+        element.style.height = "100%";
+        element.style.objectFit = "cover";
+
+        if (participantRefs.current[participant.sid]) {
+          participantRefs.current[participant.sid].innerHTML = "";
+          participantRefs.current[participant.sid].appendChild(element);
         }
-        participantRefs.current[participant.sid].appendChild(element);
+      } catch (error) {
+        console.error("Error attaching track:", error);
       }
     };
 
@@ -138,6 +200,21 @@ const RTC = () => {
         trackSubscribed(publication.track);
       }
     });
+  };
+
+  const setupLocalVideo = (roomInstance) => {
+    if (localVideoRef.current) {
+      localVideoRef.current.innerHTML = "";
+      roomInstance.localParticipant.videoTracks.forEach((publication) => {
+        if (publication.track) {
+          const element = publication.track.attach();
+          element.style.width = "100%";
+          element.style.height = "100%";
+          element.style.objectFit = "cover";
+          localVideoRef.current.appendChild(element);
+        }
+      });
+    }
   };
 
   const setupExistingParticipants = (roomInstance) => {
@@ -194,26 +271,31 @@ const RTC = () => {
       toast.success(videoEnabled ? "Camera off" : "Camera on");
     }
   };
-
+  
+  
   const handleDeviceChange = async (type, deviceId) => {
     try {
-      const constraints = { [type]: { deviceId: { exact: deviceId } } };
+      if (!room) return;
+
+      const constraints = {
+        [type]: { deviceId: { exact: deviceId } },
+      };
+
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const track =
         type === "audio"
           ? stream.getAudioTracks()[0]
           : stream.getVideoTracks()[0];
 
-      if (room) {
-        const publications = Array.from(
-          room.localParticipant[`${type}Tracks`].values()
-        );
-        const publication = publications[0];
-        if (publication) {
-          await publication.track.stop();
-          await room.localParticipant.unpublishTrack(publication.track);
-          await room.localParticipant.publishTrack(track);
-        }
+      const publications = Array.from(
+        room.localParticipant[`${type}Tracks`].values()
+      );
+
+      const publication = publications[0];
+      if (publication) {
+        await publication.track.stop();
+        await room.localParticipant.unpublishTrack(publication.track);
+        await room.localParticipant.publishTrack(track);
       }
 
       setDeviceSettings((prev) => ({
@@ -223,6 +305,7 @@ const RTC = () => {
 
       toast.success(`${type === "audio" ? "Microphone" : "Camera"} changed`);
     } catch (error) {
+      console.error(`Error changing ${type} device:`, error);
       toast.error(
         `Failed to change ${type === "audio" ? "microphone" : "camera"}`
       );
@@ -230,12 +313,21 @@ const RTC = () => {
   };
 
   const handleLeaveMeeting = () => {
-    if (room) {
-      room.disconnect();
-      toast.success("Left the meeting");
-      window.close();
-    }
+    disconnectAndCleanup();
+    toast.success("Left the meeting");
+    navigate("/");
   };
+
+  if (isConnecting) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Connecting to meeting...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
@@ -269,9 +361,7 @@ const RTC = () => {
           <div
             className={`relative bg-gray-800 rounded-xl overflow-hidden shadow-lg ${getParticipantSize()}`}
           >
-            <div ref={localVideoRef} className="w-full h-full">
-              <video className="w-full h-full object-cover" />
-            </div>
+            <div ref={localVideoRef} className="w-full h-full" />
             <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full">
               You (Host)
             </div>
@@ -286,9 +376,7 @@ const RTC = () => {
               <div
                 ref={(el) => (participantRefs.current[participant.sid] = el)}
                 className="w-full h-full"
-              >
-                <video className="w-full h-full object-cover" />
-              </div>
+              />
               <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-3 py-1 rounded-full">
                 {participant.identity}
               </div>
