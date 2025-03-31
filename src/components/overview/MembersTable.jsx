@@ -53,11 +53,12 @@ const MembersTable = () => {
 
   const workspaceData =
     data?.find((el) => el.name === selectedWorkspace?.name) || {};
+    console.log(workspaceData)
 
   // Filtering only active members
   const activeMembers =
     workspaceData.members_details?.filter(
-      (el) => el.role.toLowerCase() === "active"
+      (el) => el.status.toLowerCase() === "active"
     ) || [];
 
   return (

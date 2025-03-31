@@ -69,6 +69,8 @@ const EmployeeTable = () => {
   const workspaceData = data?.find((el) => el.name === selectedWorkspace?.name);
   const members = workspaceData?.members_details || [];
 
+  console.log(members)
+
   const filteredData = members.filter((member) =>
     member.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
