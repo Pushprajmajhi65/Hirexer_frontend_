@@ -60,17 +60,17 @@ async function inviteWorkspace({ workspace_id, emails }) {
 
 export function useInviteWorkspace() {
   const queryClient = useQueryClient();
-/*   const navigate = useNavigate(); */
+  /*   const navigate = useNavigate(); */
   return useMutation({
     mutationFn: inviteWorkspace,
     onSuccess: (data) => {
       /*   console.log(data); */
-    /*   navigate("/workspacesetupdone"); */
+      /*   navigate("/workspacesetupdone"); */
       queryClient.invalidateQueries({ queryKey: ["workspace"] });
       toast.success(data?.message);
     },
     onError: (error) => {
-      console.log(error)
+      console.log(error);
       toast.error(error?.response?.data?.error || "Failed sending invitations");
     },
   });

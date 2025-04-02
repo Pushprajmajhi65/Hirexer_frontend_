@@ -53,7 +53,7 @@ const MembersTable = () => {
 
   const workspaceData =
     data?.find((el) => el.name === selectedWorkspace?.name) || {};
-    console.log(workspaceData)
+   /*  console.log(workspaceData) */
 
   // Filtering only active members
   const activeMembers =
