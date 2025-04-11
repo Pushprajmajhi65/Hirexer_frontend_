@@ -66,10 +66,16 @@ const EmployeeTable = () => {
     );
   }
 
-  const workspaceData = data?.find((el) => el.name === selectedWorkspace?.name);
-  const members = workspaceData?.members_details || [];
+  // ✅ Safely extract workspaces
+  const workspaces = Array.isArray(data)
+    ? data
+    : data?.workspaces || [];
 
-  console.log(members)
+  const workspaceData = workspaces.find(
+    (el) => el.name === selectedWorkspace?.name
+  );
+
+  const members = workspaceData?.members_details || [];
 
   const filteredData = members.filter((member) =>
     member.username?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -88,7 +94,7 @@ const EmployeeTable = () => {
       </div>
 
       {/* Table */}
-      <div className=" overflow-hidden">
+      <div className="overflow-hidden">
         <Table>
           <TableHeader className="bg-tableHeader">
             <TableRow className="h-[40px]">
@@ -130,16 +136,15 @@ const EmployeeTable = () => {
             )}
 
             {!isLoading &&
-              filteredData.map((member, index) => (
+              filteredData.map((member) => (
                 <TableRow key={member.id} className="border-b hover:bg-gray-50">
-                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{member.id}</TableCell>
                   <TableCell>{member.username}</TableCell>
                   <TableCell>
                     {new Date(member.joined_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>{member.email}</TableCell>
                   <TableCell>{member.role}</TableCell>
-
                   <TableCell>
                     <EmployeeStatus status={member.status} />
                   </TableCell>
@@ -166,19 +171,13 @@ const EmployeeTable = () => {
       {/* Dialogs */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="w-[400px]">
-          <DeleteDialog
-            onClose={handleCloseDialog}
-            employee={selectedEmployee}
-          />
+          <DeleteDialog onClose={handleCloseDialog} employee={selectedEmployee} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
-          <EditDialog
-            onClose={handleCloseEditDialog}
-            employee={selectedEmployee}
-          />
+          <EditDialog onClose={handleCloseEditDialog} employee={selectedEmployee} />
         </DialogContent>
       </Dialog>
     </div>

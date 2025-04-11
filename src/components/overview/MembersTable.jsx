@@ -51,8 +51,9 @@ const MembersTable = () => {
     );
   }
 
-  const workspaceData =
-    data?.find((el) => el.name === selectedWorkspace?.name) || {};
+  const workspaceData = Array.isArray(data)
+  ? data.find((el) => el.name === selectedWorkspace?.name)
+  : data?.workspaces?.find((el) => el.name === selectedWorkspace?.name);
    /*  console.log(workspaceData) */
 
   // Filtering only active members
