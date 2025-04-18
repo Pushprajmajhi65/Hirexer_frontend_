@@ -11,6 +11,8 @@ import { PublicRoute } from "./components/auth/PublicRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { WorkspaceProvider } from "./context/WorkspaceContext";
 import { RoleProtectedRoute } from "./components/auth/RoleProtection";
+import ErrorBoundary from "./components/shared/ErrorBoundary";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 const SuccessfulPasswordReset = lazy(() =>
   import("./pages/SuccessfulPasswordReset")
 );
@@ -34,6 +36,7 @@ const Meeting = lazy(() => import("./pages/Meeting"));
 const Feed = lazy(() => import("./pages/Feed"));
 const RTC = lazy(() => import("./pages/RTC"));
 const AppliedJobs = lazy(() => import("./pages/AppliedJobs"));
+const Chat = lazy(() => import("./pages/Chat"));
 
 const App = () => {
   const queryClient = new QueryClient({
@@ -45,6 +48,7 @@ const App = () => {
   });
   return (
     <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
       <AuthProvider>
         <WorkspaceProvider>
           <ReactQueryDevtools initialIsOpen={false} />
@@ -126,6 +130,15 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
+                  <Route
+                    path="/privacy-policy"
+                    element={
+                      <PublicRoute>
+                        <PrivacyPolicy />
+                      </PublicRoute>
+                    }
+                  />
+
                 <Route
                   path="/workspaceinvite/:id"
                   element={
@@ -145,6 +158,16 @@ const App = () => {
                 >
                   <Route index element={<Overview />} />
                   <Route path="/overview" element={<Overview />} />
+
+                  <Route
+  path="/chat"
+  element={
+    <RoleProtectedRoute allowedRoles={["headmember", "member"]}>
+      <Chat />
+    </RoleProtectedRoute>
+  }
+/>
+               
                   
                   {/* Head Member Only Routes */}
                   <Route
@@ -173,6 +196,7 @@ const App = () => {
                       </RoleProtectedRoute>
                     }
                   />
+                  
                   <Route
                     path="/applied-jobs"
                     element={
@@ -182,10 +206,12 @@ const App = () => {
                     }
                   />
 
+
               
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/meetings" element={<Meeting />} />
                   <Route path="/feed" element={<Feed />} />
+                  
                 </Route>
 
             
@@ -196,6 +222,7 @@ const App = () => {
           </Suspense>
         </WorkspaceProvider>
       </AuthProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 };

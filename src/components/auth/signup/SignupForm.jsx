@@ -10,6 +10,7 @@ import PasswordStrengthIndicator from "./passwordStrengthIncicator";
 import toast from "react-hot-toast";
 import { useSignup } from "@/services/auth";
 
+
 const SignupForm = () => {
   const { handleSubmit, reset, register, formState, watch } = useForm();
   const { errors } = formState;
@@ -124,19 +125,29 @@ const SignupForm = () => {
 
         <PasswordStrengthIndicator password={password} />
 
-        <h2 className="text-xs text-muted-foreground flex lg:items-center gap-2 ">
-          <Checkbox
-            id="terms"
-            checked={agreeTerms}
-            onCheckedChange={handleTermsChange}
-          />
-          I agree to all the{" "}
-          <span className="text-figmaPrimary underline">
-            Terms & Conditions{" "}
-          </span>
-          and
-          <span className="text-figmaPrimary underline"> Privacy Policies</span>
-        </h2>
+        <h2 className="text-xs text-muted-foreground flex lg:items-center gap-2">
+  <Checkbox
+    id="terms"
+    checked={agreeTerms}
+    onCheckedChange={handleTermsChange}
+  />
+  I agree to all the{" "}
+  <Link 
+    to="/privacy-policy" 
+    className="text-figmaPrimary underline hover:text-figmaPrimaryDark"
+    onClick={(e) => e.stopPropagation()} // Prevent checkbox toggle when clicking link
+  >
+    Terms & Conditions
+  </Link>{" "}
+  and{" "}
+  <Link 
+    to="/privacy-policy" 
+    className="text-figmaPrimary underline hover:text-figmaPrimaryDark"
+    onClick={(e) => e.stopPropagation()}
+  >
+    Privacy Policies
+  </Link>
+</h2>
         <Button
           type="submit"
           className="py-5 cursor-pointer"

@@ -5,6 +5,7 @@ import {
   Video,
   FileText,
   Briefcase,
+  MessageCircle,
 } from "lucide-react";
 
 export const DashBoardMenuItems = [
@@ -38,6 +39,11 @@ export const DashBoardMenuItems = [
     name: "Applied Jobs",
     allowedRoles: ["member"],
   },
+  {
+    icon: <MessageCircle size={20} />, 
+    name: "Chat",
+    allowedRoles: ["headmember", "member"],
+  }
 ];
 
 export const IndustryNames = [
