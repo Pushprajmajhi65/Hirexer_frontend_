@@ -3,15 +3,26 @@ import ChatSidebar from './ChatSidebar';
 import ChatMessagesArea from './ChatMessagesArea';
 import { useGetChatUsers, useGetConversations, useStartConversation } from '@/services/chat';
 import { useQueryClient } from '@tanstack/react-query';
+import { getWebSocketStatus, disconnectWebSocket } from '@/services/chat';
 
 const ChatContainer = () => {
   const queryClient = useQueryClient();
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('disconnected');
   
   const { data: users = [], isLoading: usersLoading } = useGetChatUsers();
   const { data: conversations = [], isLoading: convLoading } = useGetConversations();
   const startConversation = useStartConversation();
+
+  // Update connection status periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setConnectionStatus(getWebSocketStatus());
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSelectUser = async (user) => {
     try {
@@ -25,13 +36,10 @@ const ChatContainer = () => {
         setSelectedUser(user);
         queryClient.invalidateQueries(['chat', 'messages', existingConv.id]);
       } else {
-        const newConv = await startConversation.mutateAsync(user.id, {
-          onSuccess: (data) => {
-            setSelectedConversation(data);
-            setSelectedUser(user);
-            queryClient.invalidateQueries(['chat', 'conversations']);
-          }
-        });
+        const newConv = await startConversation.mutateAsync(user.id);
+        setSelectedConversation(newConv);
+        setSelectedUser(user);
+        queryClient.invalidateQueries(['chat', 'conversations']);
       }
     } catch (error) {
       console.error('Failed to start conversation:', error);
@@ -50,6 +58,7 @@ const ChatContainer = () => {
   const handleBack = () => {
     setSelectedUser(null);
     setSelectedConversation(null);
+    disconnectWebSocket();
   };
 
   return (
@@ -68,6 +77,7 @@ const ChatContainer = () => {
           selectedUser={selectedUser}
           conversation={selectedConversation}
           onBack={handleBack}
+          connectionStatus={connectionStatus}
         />
       </div>
     </div>

@@ -21,19 +21,20 @@ const ChatInput = ({ conversationId, disabled }) => {
   const handleSend = () => {
     if (!message.trim() || !conversationId || disabled) return;
 
-    // Optimistic UI update for WebSocket
+    const tempId = Date.now();
     const tempMessage = {
-      id: Date.now(), // Temporary ID
+      id: tempId,
       content: message,
       timestamp: new Date().toISOString(),
       is_from_current_user: true,
       sender: {
         username: 'You',
         photo: ''
-      }
+      },
+      status: 'sending'
     };
 
-    // Add to local state immediately
+    // Optimistic update
     queryClient.setQueryData(
       ['chat', 'messages', conversationId],
       (old) => [...(old || []), tempMessage]
@@ -43,22 +44,40 @@ const ChatInput = ({ conversationId, disabled }) => {
     const wsSuccess = sendWebSocketMessage(message);
     
     if (wsSuccess) {
+      // Update status to sent
+      queryClient.setQueryData(
+        ['chat', 'messages', conversationId],
+        (old) => old.map(m => 
+          m.id === tempId ? { ...m, status: 'sent' } : m
+        )
+      );
       setMessage('');
-      textareaRef.current?.focus();
     } else {
-      // Fallback to HTTP if WebSocket fails
+      // Fallback to HTTP
       sendHttpMessage(
         { conversationId, content: message },
         {
+          onSuccess: (data) => {
+            // Replace temp message with real one
+            queryClient.setQueryData(
+              ['chat', 'messages', conversationId],
+              (old) => [
+                ...(old?.filter(m => m.id !== tempId) || []),
+                { ...data, is_from_current_user: true }
+              ]
+            );
+          },
           onError: (error) => {
+            // Mark as failed
+            queryClient.setQueryData(
+              ['chat', 'messages', conversationId],
+              (old) => old.map(m => 
+                m.id === tempId ? { ...m, status: 'failed' } : m
+              )
+            );
             toast.error('Failed to send message', {
               description: error.response?.data?.error || 'An error occurred'
             });
-            // Remove optimistic update if HTTP fails
-            queryClient.setQueryData(
-              ['chat', 'messages', conversationId],
-              (old) => old?.filter(m => m.id !== tempMessage.id) || []
-            );
           },
           onSettled: () => {
             setMessage('');
@@ -98,11 +117,7 @@ const ChatInput = ({ conversationId, disabled }) => {
           size="icon"
           className="h-10 w-10"
         >
-          {isPending ? (
-            <span className="animate-spin">↻</span>
-          ) : (
-            <Send className="h-5 w-5" />
-          )}
+          <Send className="h-5 w-5" />
         </Button>
       </div>
     </div>

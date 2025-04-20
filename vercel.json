@@ -1,8 +1,36 @@
 {
+  "version": 2,
   "rewrites": [
+    {
+      "source": "/ws/(.*)",
+      "destination": "wss://territorial-georgine-pushprajmajhi-eb39e434.koyeb.app/ws/$1"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "https://territorial-georgine-pushprajmajhi-eb39e434.koyeb.app/api/$1"
+    },
+    {
+      "source": "/chat/(.*)",
+      "destination": "https://territorial-georgine-pushprajmajhi-eb39e434.koyeb.app/chat/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/ws/(.*)",
+      "headers": [
+        {
+          "key": "Connection",
+          "value": "Upgrade"
+        },
+        {
+          "key": "Upgrade",
+          "value": "websocket"
+        }
+      ]
     }
   ]
 }

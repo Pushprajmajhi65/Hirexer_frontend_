@@ -121,11 +121,16 @@ class WebSocketManager {
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 3;
     this.connectionStatus = 'disconnected';
+    this.currentConversationId = null;
   }
 
   async connect(conversationId) {
     return new Promise((resolve, reject) => {
-      if (this.socket) this.disconnect();
+      // Disconnect if already connected to a different conversation
+      if (this.socket && this.currentConversationId !== conversationId) {
+        this.disconnect();
+      }
+      this.currentConversationId = conversationId;
 
       const tokens = getTokens();
       if (!tokens?.accessToken) {
@@ -133,15 +138,10 @@ class WebSocketManager {
         return;
       }
 
-      const wsUrl = `${WS_BASE_URL}/ws/chat/${conversationId}/`;
+      // Use token in query parameter since headers aren't supported in browsers
+      const wsUrl = `${WS_BASE_URL}/ws/chat/${conversationId}/?token=${encodeURIComponent(tokens.accessToken)}`;
       
-      // Create WebSocket with Authorization header
-      this.socket = new WebSocket(wsUrl, [], {
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken}`
-        }
-      });
-      
+      this.socket = new WebSocket(wsUrl);
       this.connectionStatus = 'connecting';
 
       this.socket.onopen = () => {
@@ -152,15 +152,32 @@ class WebSocketManager {
 
       this.socket.onmessage = (e) => {
         try {
-          const data = JSON.parse(e.data);ChatConsume
+          const data = JSON.parse(e.data);
           this.messageHandlers.forEach(handler => handler(data));
         } catch (err) {
           this.errorHandlers.forEach(handler => handler(err));
         }
       };
 
-      this.socket.onclose = (e) => {
+      this.socket.onclose = async (e) => {
         this.connectionStatus = 'disconnected';
+        
+        // Handle unauthorized (likely expired token)
+        if (e.code === 4000 || e.code === 4001) {
+          try {
+            await this.handleTokenRefresh(conversationId);
+            return;
+          } catch (refreshError) {
+            // Refresh failed, notify handlers
+            this.errorHandlers.forEach(handler => handler({
+              error: "Authentication failed",
+              detail: "Token refresh unsuccessful",
+              code: e.code
+            }));
+          }
+        }
+        
+        // Normal reconnection logic
         if (e.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
           setTimeout(() => {
             this.reconnectAttempts++;
@@ -172,6 +189,7 @@ class WebSocketManager {
             detail: e.reason || "Connection closed",
             code: e.code
           }));
+          reject(e);
         }
       };
 
@@ -182,7 +200,6 @@ class WebSocketManager {
       };
     });
   }
-
 
   async handleTokenRefresh(conversationId) {
     try {
@@ -198,12 +215,14 @@ class WebSocketManager {
         refreshToken: tokens.refreshToken
       });
       
+      // Reconnect with new token
       await this.connect(conversationId);
     } catch (error) {
       this.errorHandlers.forEach(handler => handler({
         error: "Token refresh failed",
         detail: error.message
       }));
+      throw error; // Re-throw to allow calling code to handle
     }
   }
 
@@ -212,25 +231,30 @@ class WebSocketManager {
       this.socket.close(1000, "Normal closure");
       this.socket = null;
     }
+    this.currentConversationId = null;
     this.connectionStatus = 'disconnected';
-    this.messageHandlers = [];
-    this.errorHandlers = [];
   }
 
   sendMessage(content) {
     if (this.socket?.readyState === WebSocket.OPEN) {
       try {
-        this.socket.send(JSON.stringify({
+        const message = {
           type: 'chat_message',
           content: content,
           timestamp: new Date().toISOString()
-        }));
+        };
+        this.socket.send(JSON.stringify(message));
         return true;
       } catch (error) {
         console.error("Error sending WebSocket message:", error);
+        this.errorHandlers.forEach(handler => handler(error));
         return false;
       }
     }
+    this.errorHandlers.forEach(handler => handler({
+      error: "Connection not ready",
+      detail: `WebSocket state: ${this.socket?.readyState}`
+    }));
     return false;
   }
 
