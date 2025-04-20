@@ -3,7 +3,8 @@ import React from 'react';
 import { useGetMessages } from '@/services/chat';
 import ChatMessage from './ChatMessage';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSocketMessages } from './hooks/useSocketMessages'; // or '@/hooks/useSocketMessages'
+import { useSocketMessages } from '@/hooks/useSocketMessages';
+
 
 const ChatMessages = ({ conversationId, currentUserId }) => {
   const { data: messages = [], isLoading, isError } = useGetMessages(conversationId);
