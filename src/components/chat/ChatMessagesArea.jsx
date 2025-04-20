@@ -4,7 +4,9 @@ import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import { connectWebSocket, disconnectWebSocket } from '@/services/chat';
 import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentUser } from '@/services/auth';
 import { toast } from 'sonner';
+
 
 const ChatMessagesArea = ({ selectedUser, conversation, onBack, connectionStatus }) => {
   const queryClient = useQueryClient();
@@ -21,31 +23,41 @@ const ChatMessagesArea = ({ selectedUser, conversation, onBack, connectionStatus
         queryClient.setQueryData(
           ['chat', 'messages', conversation.id],
           (oldMessages = []) => {
+            const currentUser = getCurrentUser();
+            
+            const transformedMessage = {
+              id: `ws-${Date.now()}`,
+              content: message.message,
+              timestamp: message.timestamp || new Date().toISOString(),
+              is_from_current_user: message.user_id === currentUser.id,
+              sender: {
+                username: message.username,
+                id: message.user_id,
+                photo: ''
+              },
+              status: 'sent',
+              isSocketMessage: true
+            };
+    
             const exists = oldMessages.some(m => 
-              m.id === message.id || 
-              (m.timestamp === message.timestamp && m.content === message.content)
+              m.id === transformedMessage.id || 
+              (m.content === transformedMessage.content && 
+               m.sender.username === transformedMessage.sender.username &&
+               Math.abs(new Date(m.timestamp) - new Date(transformedMessage.timestamp)) < 1000)
             );
             
-            if (exists) return oldMessages;
-            
-            return [...oldMessages, {
-              ...message,
-              id: message.id || Date.now(),
-              sender_id: message.sender_id || selectedUser?.id,
-              is_from_current_user: message.sender_id !== selectedUser?.id,
-              isSocketMessage: true // Add this flag
-            }];
+            return exists ? oldMessages : [...oldMessages, transformedMessage];
           }
         );
       }
     };
 
     const handleError = (error) => {
-      if (error.code === 1000) return; // Normal closure
+      if (error.code === 1000) return;
       console.error('WebSocket error:', error);
       setLocalConnectionStatus('error');
       
-      if (error.code === 4001) { // Auth error
+      if (error.code === 4001) {
         toast.error('Authentication expired', {
           description: 'Please refresh the page to reconnect'
         });

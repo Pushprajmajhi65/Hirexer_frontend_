@@ -226,3 +226,21 @@ export function useLogout() {
     },
   });
 }
+
+// Add these exports at the bottom of auth.js
+export const getCurrentUser = () => {
+  const username = localStorage.getItem("hirexer_username");
+  const tokens = getTokens();
+  
+  if (!username || !tokens) return null;
+  
+  return {
+    username,
+    id: tokens.accessToken, // Note: You should decode JWT to get actual user ID
+    accessToken: tokens.accessToken
+  };
+};
+
+export const getCurrentUsername = () => {
+  return localStorage.getItem("hirexer_username") || 'You';
+};

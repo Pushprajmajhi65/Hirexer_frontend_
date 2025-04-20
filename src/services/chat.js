@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "./axios";
 import { getTokens, setTokens } from "./auth";
 import { WS_BASE_URL } from "./config";
+
 // API methods
 const chatAPI = {
   getUsers: async () => {
@@ -126,11 +127,13 @@ class WebSocketManager {
 
   async connect(conversationId) {
     return new Promise((resolve, reject) => {
-      // Disconnect if already connected to a different conversation
-      if (this.socket && this.currentConversationId !== conversationId) {
+      if (this.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(this.socket.readyState)) {
+        if (this.currentConversationId === conversationId) {
+          resolve();
+          return;
+        }
         this.disconnect();
       }
-      this.currentConversationId = conversationId;
 
       const tokens = getTokens();
       if (!tokens?.accessToken) {
@@ -138,13 +141,22 @@ class WebSocketManager {
         return;
       }
 
-      // Use token in query parameter since headers aren't supported in browsers
-      const wsUrl = `${WS_BASE_URL}/ws/chat/${conversationId}/?token=${encodeURIComponent(tokens.accessToken)}`;
+      const wsUrl = `${WS_BASE_URL}ws/chat/${conversationId}/?token=${encodeURIComponent(tokens.accessToken)}`;
       
       this.socket = new WebSocket(wsUrl);
+      this.currentConversationId = conversationId;
       this.connectionStatus = 'connecting';
 
+      // Add connection timeout
+      const connectionTimeout = setTimeout(() => {
+        if (this.socket?.readyState !== WebSocket.OPEN) {
+          this.socket?.close();
+          reject(new Error("Connection timeout"));
+        }
+      }, 10000); // 10 second timeout
+
       this.socket.onopen = () => {
+        clearTimeout(connectionTimeout);
         this.reconnectAttempts = 0;
         this.connectionStatus = 'connected';
         resolve();
@@ -153,50 +165,13 @@ class WebSocketManager {
       this.socket.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
+          // Add socket message flag
+          data.isSocketMessage = true;
           this.messageHandlers.forEach(handler => handler(data));
         } catch (err) {
+          console.error("WebSocket message error:", err);
           this.errorHandlers.forEach(handler => handler(err));
         }
-      };
-
-      this.socket.onclose = async (e) => {
-        this.connectionStatus = 'disconnected';
-        
-        // Handle unauthorized (likely expired token)
-        if (e.code === 4000 || e.code === 4001) {
-          try {
-            await this.handleTokenRefresh(conversationId);
-            return;
-          } catch (refreshError) {
-            // Refresh failed, notify handlers
-            this.errorHandlers.forEach(handler => handler({
-              error: "Authentication failed",
-              detail: "Token refresh unsuccessful",
-              code: e.code
-            }));
-          }
-        }
-        
-        // Normal reconnection logic
-        if (e.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
-          setTimeout(() => {
-            this.reconnectAttempts++;
-            this.connect(conversationId).then(resolve).catch(reject);
-          }, 1000 * Math.pow(2, this.reconnectAttempts));
-        } else {
-          this.errorHandlers.forEach(handler => handler({
-            error: "WebSocket closed",
-            detail: e.reason || "Connection closed",
-            code: e.code
-          }));
-          reject(e);
-        }
-      };
-
-      this.socket.onerror = (error) => {
-        this.connectionStatus = 'error';
-        this.errorHandlers.forEach(handler => handler(error));
-        reject(error);
       };
     });
   }
@@ -238,9 +213,12 @@ class WebSocketManager {
   sendMessage(content) {
     if (this.socket?.readyState === WebSocket.OPEN) {
       try {
+        const user = getCurrentUser();
         const message = {
           type: 'chat_message',
-          content: content,
+          message: content,
+          username: user.username,
+          user_id: user.id,
           timestamp: new Date().toISOString()
         };
         this.socket.send(JSON.stringify(message));
@@ -251,12 +229,9 @@ class WebSocketManager {
         return false;
       }
     }
-    this.errorHandlers.forEach(handler => handler({
-      error: "Connection not ready",
-      detail: `WebSocket state: ${this.socket?.readyState}`
-    }));
     return false;
   }
+
 
   getStatus() {
     return this.connectionStatus;

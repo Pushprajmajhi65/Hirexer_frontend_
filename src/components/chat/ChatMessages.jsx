@@ -1,42 +1,52 @@
-// src/components/chat/ChatMessages.tsx
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useGetMessages } from '@/services/chat';
 import ChatMessage from './ChatMessage';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSocketMessages } from '@/hooks/useSocketMessages';
-
+import { useQueryClient } from '@tanstack/react-query';
 
 const ChatMessages = ({ conversationId, currentUserId }) => {
-  const { data: messages = [], isLoading, isError } = useGetMessages(conversationId);
-  const socketMessages = useSocketMessages(conversationId);
+  const { data: initialMessages = [], isLoading, isError } = useGetMessages(conversationId);
+  const queryClient = useQueryClient();
+  const scrollRef = useRef(null);
 
-  // Combine and deduplicate messages
-  const allMessages = [...messages, ...socketMessages]
-    .filter((msg, index, self) => 
-      index === self.findIndex(m => 
-        m.id === msg.id || 
-        (m.timestamp === msg.timestamp && m.content === msg.content)
-      )
-    )
-    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  // Watch for message updates
+  const messages = queryClient.getQueryData(['chat', 'messages', conversationId]) || initialMessages;
+
+  // Scroll to bottom on new message
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   if (isLoading) {
-    return <div className="flex-1 flex items-center justify-center">Loading...</div>;
+    return <div className="p-4 text-muted-foreground">Loading messages...</div>;
   }
 
   if (isError) {
-    return <div className="flex-1 flex items-center justify-center">Error loading messages</div>;
+    return <div className="p-4 text-destructive">Failed to load messages.</div>;
   }
 
   return (
-    <ScrollArea className="flex-1 p-4">
-      {allMessages.map((message) => (
-        <ChatMessage
-          key={`${message.id}-${message.timestamp}`}
-          message={message}
-          isMe={message.is_from_current_user || message.sender_id === currentUserId}
-        />
-      ))}
+    <ScrollArea className="h-full">
+      <div ref={scrollRef} className="flex flex-col gap-2 p-4">
+      {messages.map((msg) => (
+  <ChatMessage
+    key={msg.id}
+    message={{
+      id: msg.id,
+      content: msg.content || msg.message, // Handle both formats
+      timestamp: msg.timestamp,
+      sender: msg.sender || { 
+        username: msg.username || 'Unknown',
+        photo: ''
+      },
+      status: msg.status || 'sent'
+    }}
+    isOwnMessage={msg.is_from_current_user}
+  />
+))}
+      </div>
     </ScrollArea>
   );
 };
