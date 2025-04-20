@@ -141,7 +141,7 @@ class WebSocketManager {
         return;
       }
 
-      const wsUrl = `${WS_BASE_URL}ws/chat/${conversationId}/?token=${encodeURIComponent(tokens.accessToken)}`;
+      const wsUrl = `${WS_BASE_URL}/ws/chat/${conversationId}/?token=${encodeURIComponent(tokens.accessToken)}`;
       
       this.socket = new WebSocket(wsUrl);
       this.currentConversationId = conversationId;
