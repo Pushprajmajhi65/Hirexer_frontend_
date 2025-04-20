@@ -78,3 +78,29 @@ export function useInviteWorkspace() {
     },
   });
 }
+
+
+// transfer member logice
+async function transferMembers({ source_workspace_id, target_workspace_id, member_emails }) {
+  const response = await axiosInstance.post("transfer_member/", {
+    source_workspace_id,
+    target_workspace_id,
+    member_emails: member_emails
+  });
+  return response.data;
+}
+
+export function useTransferMembers() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transferMembers,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace"] });
+      
+    },
+    onError: (error) => {
+      console.log(error);
+     
+    },
+  });
+}
