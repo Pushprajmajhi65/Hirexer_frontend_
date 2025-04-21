@@ -162,17 +162,34 @@ class WebSocketManager {
         resolve();
       };
 
+      // In your WebSocketManager class
       this.socket.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
-          // Add socket message flag
-          data.isSocketMessage = true;
-          this.messageHandlers.forEach(handler => handler(data));
+          
+          if (data.type === 'chat_message') {
+            const transformedMessage = {
+              id: data.id || `ws-${Date.now()}`,
+              content: data.content || data.message,
+              timestamp: data.timestamp || new Date().toISOString(),
+              is_from_current_user: data.user_id === getCurrentUser().id,
+              sender: {
+                username: data.username,
+                id: data.user_id,
+                photo: data.photo || ''
+              },
+              status: 'sent',
+              isSocketMessage: true
+            };
+            
+            this.messageHandlers.forEach(handler => handler(transformedMessage));
+          }
         } catch (err) {
           console.error("WebSocket message error:", err);
           this.errorHandlers.forEach(handler => handler(err));
         }
       };
+
     });
   }
 

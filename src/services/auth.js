@@ -124,25 +124,27 @@ export function useLogin() {
 
       try {
         const workspaceResponse = await axiosInstance.get("api/workspaces/");
-        const workspaces = workspaceResponse.data;
+        const workspaces = workspaceResponse.data ?? [];
 
         // Set workspaces in context and cache
         setWorkspaces(workspaces);
         queryClient.setQueryData(["workspaces"], workspaces);
 
-        if (workspaces?.length > 0) {
-          setSelectedWorkspace(workspaces[0]);
-          localStorage.setItem("selectedWorkspace", JSON.stringify(workspaces[0]));
-          navigate("/overview"); // redirect only after fetching workspaces
+        if (workspaces.length > 0) {
+          const selected = workspaces[0];
+          setSelectedWorkspace(selected);
+          localStorage.setItem("selectedWorkspace", JSON.stringify(selected));
+          navigate("/overview");
         } else {
-          navigate("/onboarding");
+          // No workspaces found
+          setTimeout(() => navigate("/overview"), 500);
         }
+
+        toast.success("Logged in successfully");
       } catch (error) {
         console.error("Error fetching workspaces:", error);
-        navigate("/onboarding"); 
+        toast.error("Something went wrong while fetching workspaces.");
       }
-
-      toast.success("Logged in successfully");
     },
     onError: (error) => {
       toast.error(error?.response?.data?.error || "User login failed");
