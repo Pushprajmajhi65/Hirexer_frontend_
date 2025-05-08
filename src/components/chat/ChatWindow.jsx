@@ -8,6 +8,7 @@ const ChatWindow = ({ conversationId }) => {
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState(null);
+  const [connectionError, setConnectionError] = useState(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const lastTypingSentRef = useRef(0);
@@ -17,8 +18,10 @@ const ChatWindow = ({ conversationId }) => {
   const { user } = useAuth();
   const { handleNewMessage, handleTypingIndicator } = useChatUpdates(conversationId);
 
+  // Determine WebSocket protocol based on current protocol
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const { send } = useWebSocket(
-    conversationId ? `ws://${window.location.host}/ws/chat/${conversationId}/` : null,
+    conversationId ? `${protocol}//${window.location.host}/ws/chat/${conversationId}/` : null,
     {
       chat_message: handleNewMessage,
       typing_indicator: (data) => {
@@ -33,6 +36,14 @@ const ChatWindow = ({ conversationId }) => {
           }, 3000);
         }
       },
+      error: (err) => {
+        setConnectionError("Failed to connect to chat server. Trying to reconnect...");
+        console.error("WebSocket error:", err);
+      },
+      reconnect: () => {
+        setConnectionError(null);
+        console.log("WebSocket reconnected successfully");
+      }
     }
   );
 
@@ -109,6 +120,12 @@ const ChatWindow = ({ conversationId }) => {
 
   return (
     <div className="flex-1 flex flex-col">
+      {connectionError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 text-sm">
+          {connectionError}
+        </div>
+      )}
+      
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-4">
           {messages?.map((msg) => (
@@ -168,11 +185,12 @@ const ChatWindow = ({ conversationId }) => {
             onChange={handleInputChange}
             placeholder="Type a message..."
             className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={!!connectionError}
           />
           <button
             type="submit"
-            className="bg-blue-500 text-white rounded-full px-4 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            disabled={!message.trim()}
+            className="bg-blue-500 text-white rounded-full px-4 py-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            disabled={!message.trim() || !!connectionError}
           >
             Send
           </button>
