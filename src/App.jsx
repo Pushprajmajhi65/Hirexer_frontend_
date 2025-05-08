@@ -36,7 +36,7 @@ const Meeting = lazy(() => import("./pages/Meeting"));
 const Feed = lazy(() => import("./pages/Feed"));
 const RTC = lazy(() => import("./pages/RTC"));
 const AppliedJobs = lazy(() => import("./pages/AppliedJobs"));
-const Chat = lazy(() => import("./pages/Chatpage"));
+const Chat = lazy(() => import("./pages/ChatPage"));
 
 const App = () => {
   const queryClient = new QueryClient({
