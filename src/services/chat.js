@@ -1,313 +1,154 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "./axios";
-import { getTokens, setTokens } from "./auth";
-import { WS_BASE_URL } from "./config";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// API methods
-const chatAPI = {
-  getUsers: async () => {
-    try {
-      const { data } = await axiosInstance.get("/chat/users/");
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      throw error;
-    }
-  },
-  
-  getConversations: async () => {
-    try {
-      const { data } = await axiosInstance.get("/chat/conversations/");
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-      throw error;
-    }
-  },
-  
-  getMessages: async (conversationId) => {
-    try {
-      const { data } = await axiosInstance.get(`/chat/conversations/${conversationId}/messages/`);
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      throw error;
-    }
-  },
-  
-  startConversation: async (participantId) => {
-    try {
-      const { data } = await axiosInstance.post("/chat/conversations/start/", {
-        participant_id: participantId
-      });
-      return data;
-    } catch (error) {
-      console.error("Error starting conversation:", error);
-      throw error;
-    }
-  },
-  
-  sendMessage: async (conversationId, content) => {
-    try {
-      const { data } = await axiosInstance.post(`/chat/conversations/${conversationId}/messages/`, {
-        content
-      });
-      return data;
-    } catch (error) {
-      console.error("Error sending message:", error);
-      throw error;
-    }
-  }
+// Fetch all users
+export const fetchUsers = async () => {
+  const response = await axiosInstance.get("chat/users/");
+  return response.data;
+};
+
+// Fetch all conversations
+export const fetchConversations = async () => {
+  const response = await axiosInstance.get("chat/conversations/");
+  return response.data;
+};
+
+// Start a new conversation
+export const startConversation = async (participantId) => {
+  const response = await axiosInstance.post("chat/conversations/start/", {
+    participant_id: participantId,
+  });
+  return response.data;
+};
+
+// Fetch messages for a conversation
+export const fetchMessages = async (conversationId) => {
+  const response = await axiosInstance.get(
+    `chat/conversations/${conversationId}/messages/`
+  );
+  return response.data;
+};
+
+// Send a message
+export const sendMessage = async ({ conversationId, content }) => {
+  const response = await axiosInstance.post(
+    `chat/conversations/${conversationId}/messages/`,
+    { content }
+  );
+  return response.data;
+};
+
+// Mark messages as read
+export const markMessagesAsRead = async (conversationId) => {
+  const response = await axiosInstance.patch(
+    `chat/conversations/${conversationId}/mark_read/`
+  );
+  return response.data;
 };
 
 // React Query hooks
-const useGetChatUsers = () => {
+export const useUsers = () => {
   return useQuery({
-    queryKey: ['chat', 'users'],
-    queryFn: chatAPI.getUsers,
-    staleTime: 0,
-    retry: (failureCount, error) => failureCount < 3 && error?.response?.status !== 401
+    queryKey: ["chat-users"],
+    queryFn: fetchUsers,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
-const useGetConversations = () => {
+export const useConversations = () => {
   return useQuery({
-    queryKey: ['chat', 'conversations'],
-    queryFn: chatAPI.getConversations,
-    staleTime: 0,
-    retry: (failureCount, error) => failureCount < 3 && error?.response?.status !== 401
+    queryKey: ["chat-conversations"],
+    queryFn: fetchConversations,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
   });
 };
 
-
-const useGetMessages = (conversationId) => {
+export const useMessages = (conversationId) => {
   return useQuery({
-    queryKey: ['chat', 'messages', conversationId],
-    queryFn: () => chatAPI.getMessages(conversationId),
+    queryKey: ["chat-messages", conversationId],
+    queryFn: () => fetchMessages(conversationId),
     enabled: !!conversationId,
-    retry: (failureCount, error) => failureCount < 3 && error?.response?.status !== 401
+    staleTime: 30 * 1000, // 30 seconds
   });
 };
 
-
-
-const useStartConversation = () => {
+export const useStartConversation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: chatAPI.startConversation,
+    mutationFn: startConversation,
     onSuccess: () => {
-      queryClient.invalidateQueries(['chat', 'conversations']);
-    }
+      queryClient.invalidateQueries(["chat-conversations"]);
+      queryClient.invalidateQueries(["chat-users"]);
+    },
   });
 };
 
-const useSendMessage = () => {
+export const useSendMessage = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ conversationId, content }) => chatAPI.sendMessage(conversationId, content),
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries(['chat', 'messages', vars.conversationId]);
-    }
+    mutationFn: sendMessage,
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(
+        ["chat-messages", variables.conversationId],
+        (oldData) => {
+          return [...(oldData || []), data];
+        }
+      );
+      queryClient.invalidateQueries(["chat-messages", variables.conversationId]);
+      queryClient.invalidateQueries(["chat-conversations"]);
+    },
   });
 };
 
+export const useMarkMessagesAsRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markMessagesAsRead,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(["chat-messages", variables.conversationId]);
+      queryClient.invalidateQueries(["chat-conversations"]);
+    },
+  });
+};
 
+export const useChatUpdates = (conversationId) => {
+  const queryClient = useQueryClient();
 
-// WebSocket Manager
-class WebSocketManager {
-  constructor() {
-    this.socket = null;
-    this.messageHandlers = [];
-    this.errorHandlers = [];
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 3;
-    this.connectionStatus = 'disconnected';
-    this.currentConversationId = null;
-  }
-
-  async connect(conversationId) {
-    return new Promise((resolve, reject) => {
-      if (this.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(this.socket.readyState)) {
-        if (this.currentConversationId === conversationId) {
-          resolve();
-          return;
-        }
-        this.disconnect();
-      }
-
-      const tokens = getTokens();
-      if (!tokens?.accessToken) {
-        reject(new Error("No access token available"));
-        return;
-      }
-
-      const wsUrl = `${WS_BASE_URL}/ws/chat/${conversationId}/?token=${encodeURIComponent(tokens.accessToken)}`;
-      
-      this.socket = new WebSocket(wsUrl);
-      this.currentConversationId = conversationId;
-      this.connectionStatus = 'connecting';
-
-      // Add connection timeout
-      const connectionTimeout = setTimeout(() => {
-        if (this.socket?.readyState !== WebSocket.OPEN) {
-          this.socket?.close();
-          reject(new Error("Connection timeout"));
-        }
-      }, 10000); // 10 second timeout
-
-      this.socket.onopen = () => {
-        clearTimeout(connectionTimeout);
-        this.reconnectAttempts = 0;
-        this.connectionStatus = 'connected';
-        resolve();
-      };
-
-      // In your WebSocketManager class
-      this.socket.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          
-          if (data.type === 'chat_message') {
-            const transformedMessage = {
-              id: data.id || `ws-${Date.now()}`,
-              content: data.content || data.message,
-              timestamp: data.timestamp || new Date().toISOString(),
-              is_from_current_user: data.user_id === getCurrentUser().id,
-              sender: {
-                username: data.username,
-                id: data.user_id,
-                photo: data.photo || ''
-              },
-              status: 'sent',
-              isSocketMessage: true
-            };
-            
-            this.messageHandlers.forEach(handler => handler(transformedMessage));
+  const handleNewMessage = (data) => {
+    if (data.conversation_id === conversationId) {
+      queryClient.setQueryData(
+        ["chat-messages", conversationId],
+        (oldData) => {
+          // Check if message already exists
+          if (oldData?.some(msg => msg.id === data.id)) {
+            return oldData;
           }
-        } catch (err) {
-          console.error("WebSocket message error:", err);
-          this.errorHandlers.forEach(handler => handler(err));
+          return [...(oldData || []), {
+            id: data.id,
+            content: data.content,
+            timestamp: data.timestamp,
+            sender: {
+              id: data.user_id,
+              username: data.username,
+              avatar: data.photo,
+              name: data.username
+            },
+            read: false
+          }];
         }
-      };
-
-    });
-  }
-
-  async handleTokenRefresh(conversationId) {
-    try {
-      const tokens = getTokens();
-      if (!tokens?.refreshToken) throw new Error("No refresh token");
-      
-      const response = await axiosInstance.post('auth/refresh/', {
-        refresh: tokens.refreshToken
-      });
-      
-      setTokens({
-        accessToken: response.data.access,
-        refreshToken: tokens.refreshToken
-      });
-      
-      // Reconnect with new token
-      await this.connect(conversationId);
-    } catch (error) {
-      this.errorHandlers.forEach(handler => handler({
-        error: "Token refresh failed",
-        detail: error.message
-      }));
-      throw error; // Re-throw to allow calling code to handle
+      );
     }
-  }
-
-  disconnect() {
-    if (this.socket) {
-      this.socket.close(1000, "Normal closure");
-      this.socket = null;
-    }
-    this.currentConversationId = null;
-    this.connectionStatus = 'disconnected';
-  }
-
-  sendMessage(content) {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      try {
-        const user = getCurrentUser();
-        const message = {
-          type: 'chat_message',
-          message: content,
-          username: user.username,
-          user_id: user.id,
-          timestamp: new Date().toISOString()
-        };
-        this.socket.send(JSON.stringify(message));
-        return true;
-      } catch (error) {
-        console.error("Error sending WebSocket message:", error);
-        this.errorHandlers.forEach(handler => handler(error));
-        return false;
-      }
-    }
-    return false;
-  }
-
-
-  getStatus() {
-    return this.connectionStatus;
-  }
-
-  addMessageHandler(handler) {
-    this.messageHandlers.push(handler);
-    return () => {
-      this.messageHandlers = this.messageHandlers.filter(h => h !== handler);
-    };
-  }
-
-  addErrorHandler(handler) {
-    this.errorHandlers.push(handler);
-    return () => {
-      this.errorHandlers = this.errorHandlers.filter(h => h !== handler);
-    };
-  }
-}
-
-const wsManager = new WebSocketManager();
-
-const connectWebSocket = (conversationId, onMessage, onError) => {
-  const removeMessageHandler = wsManager.addMessageHandler(onMessage);
-  const removeErrorHandler = wsManager.addErrorHandler(onError);
-  
-  const connectionPromise = wsManager.connect(conversationId);
-  
-  return {
-    promise: connectionPromise,
-    cleanup: () => {
-      removeMessageHandler();
-      removeErrorHandler();
-    }
+    queryClient.invalidateQueries(["chat-conversations"]);
   };
-};
 
-const disconnectWebSocket = () => {
-  wsManager.disconnect();
-};
+  const handleTypingIndicator = (data) => {
+    // This will be used in the ChatWindow component
+    return data;
+  };
 
-const sendWebSocketMessage = (content) => {
-  return wsManager.sendMessage(content);
-};
-
-const getWebSocketStatus = () => {
-  return wsManager.getStatus();
-};
-
-// Export all hooks and functions
-export {
-  chatAPI,
-  useGetChatUsers,
-  useGetConversations,
-  useGetMessages,
-  useStartConversation,
-  useSendMessage,
-  connectWebSocket,
-  disconnectWebSocket,
-  sendWebSocketMessage,
-  getWebSocketStatus
+  return { 
+    handleNewMessage, 
+    handleTypingIndicator 
+  };
 };
