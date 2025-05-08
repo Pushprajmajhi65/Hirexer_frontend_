@@ -20,7 +20,14 @@ import Loader from "../shared/Loader";
 import toast from "react-hot-toast";
 
 const UserDetails = () => {
-  const { register, handleSubmit, control, setValue } = useForm();
+  const { 
+    register, 
+    handleSubmit, 
+    control, 
+    setValue,
+    formState: { errors } // Destructure errors here
+  } = useForm();
+  
   const mutation = useUpdateUserData();
   const { data: userData, isLoading } = useGetUserData();
 
@@ -103,13 +110,13 @@ const UserDetails = () => {
   const onSubmit = async (data) => {
     try {
       let photoToSubmit = existingPhoto;
-
+  
       if (fileToUpload) {
         if (fileToUpload.size > 2 * 1024 * 1024) {
           toast.error("File size should not exceed 2MB");
           return;
         }
-
+  
         const img = new Image();
         await new Promise((resolve, reject) => {
           img.onload = () => {
@@ -121,13 +128,14 @@ const UserDetails = () => {
           };
           img.src = URL.createObjectURL(fileToUpload);
         });
-
+  
         photoToSubmit = fileToUpload;
       } else if (photoRemoved) {
         photoToSubmit = null;
       }
-
+  
       mutation.mutate({
+        username: data.username,
         description: data.description,
         skills: data.skills,
         role: data.role,
@@ -137,6 +145,7 @@ const UserDetails = () => {
       });
     } catch (error) {
       console.error("Failed to update profile:", error);
+      toast.error(error.response?.data?.error || "Failed to update profile");
     }
   };
 
@@ -162,14 +171,34 @@ const UserDetails = () => {
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Name
                   </Label>
-                  <Input
-                    disabled
-                    type="text"
-                    placeholder="Your name"
-                    {...register("username", { required: true })}
-                    className="flex-1 max-w-[600px] p-4 placeholder:text-[15px] bg-gray-50"
-                  />
+                  <div className="flex-1 max-w-[600px]">
+                    <Input
+                      type="text"
+                      placeholder="Your name"
+                      disabled={isLoading || mutation.isPending}
+                      {...register("username", { 
+                        required: "Username is required",
+                        minLength: {
+                          value: 3,
+                          message: "Username must be at least 3 characters"
+                        },
+                        maxLength: {
+                          value: 30,
+                          message: "Username must not exceed 30 characters"
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9_]+$/,
+                          message: "Username can only contain letters, numbers and underscores"
+                        }
+                      })}
+                      className="w-full p-4 placeholder:text-[15px] bg-gray-50"
+                    />
+                    {errors.username && (
+                      <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
+                    )}
+                  </div>
                 </Wrapper>
+                
                 <Wrapper>
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Email address
@@ -179,11 +208,10 @@ const UserDetails = () => {
                     disabled
                     placeholder="hirexer@gmail.com"
                     className="flex-1 max-w-[600px] p-4 placeholder:text-[15px] bg-gray-50"
-                    {...register("email", {
-                      required: "This field is required",
-                    })}
+                    {...register("email")}
                   />
                 </Wrapper>
+
                 <Wrapper>
                   <section className="min-w-[200px] xl:min-w-[300px]">
                     <Label>Your photo</Label>
@@ -268,9 +296,9 @@ const UserDetails = () => {
                         )}
                       </div>
                     </div>
-                   
                   </div>
                 </Wrapper>
+
                 <Wrapper>
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Description
@@ -278,10 +306,14 @@ const UserDetails = () => {
                   <Textarea
                     placeholder="Description"
                     disabled={isLoading || mutation.isPending}
-                    {...register("description", { required: true })}
+                    {...register("description", { required: "Description is required" })}
                     className="flex-1 max-w-[600px] max-h-[120px] p-4 placeholder:text-[15px] bg-gray-50"
                   />
+                  {errors.description && (
+                    <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+                  )}
                 </Wrapper>
+
                 <Wrapper>
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Skills
@@ -289,10 +321,14 @@ const UserDetails = () => {
                   <Textarea
                     placeholder="Skills"
                     disabled={isLoading || mutation.isPending}
-                    {...register("skills", { required: true })}
+                    {...register("skills", { required: "Skills are required" })}
                     className="flex-1 max-w-[600px] max-h-[120px] p-4 placeholder:text-[15px] bg-gray-50"
                   />
+                  {errors.skills && (
+                    <p className="text-red-500 text-sm mt-1">{errors.skills.message}</p>
+                  )}
                 </Wrapper>
+
                 <Wrapper>
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Role
@@ -301,10 +337,14 @@ const UserDetails = () => {
                     type="text"
                     placeholder="Your role"
                     disabled={isLoading || mutation.isPending}
-                    {...register("role", { required: true })}
+                    {...register("role", { required: "Role is required" })}
                     className="flex-1 max-w-[600px] p-4 placeholder:text-[15px] bg-gray-50"
                   />
+                  {errors.role && (
+                    <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
+                  )}
                 </Wrapper>
+
                 <Wrapper>
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Country
@@ -314,26 +354,32 @@ const UserDetails = () => {
                     control={control}
                     defaultValue={userData?.country || ""}
                     rules={{ required: "Country is required" }}
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={mutation.isPending || isLoading}
-                      >
-                        <SelectTrigger className="flex-1 w-full max-w-[600px] p-4 placeholder:text-[15px] bg-gray-50">
-                          <SelectValue placeholder="Select a country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {countryData.map((el) => (
-                            <SelectItem value={el.name} key={el.id}>
-                              {el.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    render={({ field, fieldState: { error } }) => (
+                      <div className="flex-1 max-w-[600px]">
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={mutation.isPending || isLoading}
+                        >
+                          <SelectTrigger className="w-full p-4 placeholder:text-[15px] bg-gray-50">
+                            <SelectValue placeholder="Select a country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countryData.map((el) => (
+                              <SelectItem value={el.name} key={el.id}>
+                                {el.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {error && (
+                          <p className="text-red-500 text-sm mt-1">{error.message}</p>
+                        )}
+                      </div>
                     )}
                   />
                 </Wrapper>
+
                 <Wrapper>
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Timezone
@@ -343,29 +389,35 @@ const UserDetails = () => {
                     control={control}
                     defaultValue={userData?.time_zone || ""}
                     rules={{ required: "Timezone is required" }}
-                    render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={isLoading || mutation.isPending}
-                      >
-                        <SelectTrigger className="flex-1 w-full max-w-[600px] p-4 placeholder:text-[15px] bg-gray-50">
-                          <SelectValue placeholder="Select a timezone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timezoneData.map((el) => (
-                            <SelectItem value={el.name} key={el.abbreviation}>
-                              {el.name} ({el.abbreviation}){" "}
-                              <span className="text-muted-foreground">
-                                {el.utc_offset}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    render={({ field, fieldState: { error } }) => (
+                      <div className="flex-1 max-w-[600px]">
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={isLoading || mutation.isPending}
+                        >
+                          <SelectTrigger className="w-full p-4 placeholder:text-[15px] bg-gray-50">
+                            <SelectValue placeholder="Select a timezone" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timezoneData.map((el) => (
+                              <SelectItem value={el.name} key={el.abbreviation}>
+                                {el.name} ({el.abbreviation}){" "}
+                                <span className="text-muted-foreground">
+                                  {el.utc_offset}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {error && (
+                          <p className="text-red-500 text-sm mt-1">{error.message}</p>
+                        )}
+                      </div>
                     )}
                   />
                 </Wrapper>
+
                 <div className="flex justify-end mt-4">
                   <Button
                     type="submit"

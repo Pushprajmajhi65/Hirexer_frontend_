@@ -147,6 +147,39 @@ export function useGetWorkspacePosts(workspace_id) {
   });
 }
 
+async function editPost({ post_id, formData }) {
+  const response = await axiosInstance.put(
+    `posts/${post_id}/edit/`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+  return response.data;
+}
+export function useEditPost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: editPost,
+    onSuccess: () => {
+      toast.success("Post updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["getPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["getWorkspacePosts"] });
+    },
+    onError: (error) => {
+      console.log(error);
+      toast.error(
+        error?.response?.data?.error ||
+          error?.response?.data?.detail ||
+          "Failed updating post"
+      );
+    },
+  });
+}
+
+
 async function updateApplicationStatus({ application_id, status }) {
   const response = await axiosInstance.post(
     `applications/${application_id}/status/`,

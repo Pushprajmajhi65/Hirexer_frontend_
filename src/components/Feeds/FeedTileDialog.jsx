@@ -4,12 +4,9 @@ import { Button } from "../ui/button";
 import { getInitial } from "@/utils/getInitial";
 import { useWorkspace } from "@/context/WorkspaceContext";
 
-const FeedTileDialog = ({ onClose, onApply }) => {
+const FeedTileDialog = ({ onClose, onApply, onEdit, isOwner }) => {
   const { selectedWorkspace } = useWorkspace();
-  const handleApplyClick = () => {
-    onApply();
-    onClose()
-  };
+  
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       <section className="flex items-center gap-2 w-full">
@@ -26,9 +23,23 @@ const FeedTileDialog = ({ onClose, onApply }) => {
           </h4>
         </div>
       </section>
-      <Button className="w-full" onClick={handleApplyClick}>
-        Apply Now
-      </Button>
+      
+      {isOwner ? (
+        <>
+          <Button className="w-full" onClick={onEdit}>
+            Edit Post
+          </Button>
+          {!isOwner && (
+            <Button variant="outline" className="w-full" onClick={onApply}>
+              Apply Application
+            </Button>
+          )}
+        </>
+      ) : (
+        <Button className="w-full" onClick={onApply}>
+          Apply Now
+        </Button>
+      )}
     </div>
   );
 };

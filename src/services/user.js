@@ -14,10 +14,21 @@ export function useGetUserData() {
   });
 }
 
-async function updateUser({ role, country, time_zone,description,skills,photo }) {
+async function updateUser({ username, role, country, time_zone, description, skills, photo }) {
+  const formData = new FormData();
+  
+  if (username) formData.append('username', username);
+  if (role) formData.append('role', role);
+  if (country) formData.append('country', country);
+  if (time_zone) formData.append('time_zone', time_zone);
+  if (description) formData.append('description', description);
+  if (skills) formData.append('skills', skills);
+  if (photo) formData.append('photo', photo);
+  else if (photo === null) formData.append('photo', ''); // For photo removal
+
   const response = await axiosInstance.post(
     "profile/edit/",
-    { role, country, time_zone,description,skills,photo },
+    formData,
     {
       headers: {
         "Content-Type": "multipart/form-data",
