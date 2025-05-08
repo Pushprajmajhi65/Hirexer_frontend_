@@ -25,19 +25,12 @@ const FeedTileDialog = ({ onClose, onApply, onEdit, isOwner }) => {
       </section>
       
       {isOwner ? (
-        <>
-          <Button className="w-full" onClick={onEdit}>
-            Edit Post
-          </Button>
-          {!isOwner && (
-            <Button variant="outline" className="w-full" onClick={onApply}>
-              Apply Application
-            </Button>
-          )}
-        </>
+        <Button className="w-full" onClick={onEdit}>
+          Edit Post
+        </Button>
       ) : (
-        <Button className="w-full" onClick={onApply}>
-          Apply Now
+        <Button variant="outline" className="w-full" onClick={onApply}>
+          Apply Application
         </Button>
       )}
     </div>

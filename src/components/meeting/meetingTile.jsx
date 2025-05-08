@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { formatUserReadableDate } from "@/utils/formatDate";
-import { FaUsers, FaStar, FaTrash } from "react-icons/fa";
+import { FaUsers, FaStar, FaTrash, FaEdit } from "react-icons/fa";
 import { Minus, UserPlus } from "lucide-react";
 import { useInviteMeeting, useDeleteMeeting } from "@/services/meeting";
 import {
@@ -14,14 +14,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import EditMeeting from "./EditMeeting"; // Import the EditMeeting component
 
-const MeetingTile = ({ el }) => {
+const MeetingTile = ({ el, refetch }) => {
   const [emails, setEmails] = useState("");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const inviteMutation = useInviteMeeting();
   const deleteMutation = useDeleteMeeting();
-
 
   const isPastMeeting = new Date(`${el.end_date}`) < new Date();
 
@@ -98,7 +99,36 @@ const MeetingTile = ({ el }) => {
           </span>
         </section>
 
- 
+        {/* Edit Button and Dialog */}
+        {!isPastMeeting && (
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                title="Edit Meeting"
+              >
+                <FaEdit className="h-3 w-3" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <EditMeeting 
+                meetingData={{
+                  id: el.id,
+                  title: el.name,
+                  start_time: el.start_date,
+                  end_time: el.end_date,
+                  description: el.description || "",
+                  members: el.participants.map(p => ({ email: p.email }))
+                }} 
+                onClose={() => setIsEditOpen(false)}
+                refetch={refetch}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+
         {!isPastMeeting && (
           <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
             <DialogTrigger asChild>
@@ -139,7 +169,6 @@ const MeetingTile = ({ el }) => {
           </Dialog>
         )}
 
-    
         <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <DialogTrigger asChild>
             <Button

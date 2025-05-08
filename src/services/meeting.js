@@ -41,6 +41,47 @@ export function useCreateMeeting() {
   });
 }
 
+async function editMeeting({
+  meetingId,
+  title,
+  start_time,
+  end_time,
+  description,
+  invited_members,
+}) {
+  const response = await axiosInstance.put(`edit/${meetingId}/`, {
+    title,
+    start_time,
+    end_time,
+    description,
+    invited_members,
+  });
+  return response.data;
+}
+
+export function useEditMeeting() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: editMeeting,
+    mutationKey: ["editMeeting"],
+    onSuccess: (data) => {
+      toast.success(data.message);
+      // Invalidate the query for fetching user meetings to reflect the changes
+      queryClient.invalidateQueries({ queryKey: ["getUserMeetings"] });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error(
+        error.response.data.error ||
+          error?.response.data.details ||
+          "Failed editing meeting"
+      );
+    },
+  });
+}
+
+
+
 async function inviteMembers({ meeting_id, user_emails }) {
   const response = await axiosInstance.post("invite/", {
     meeting_id,
