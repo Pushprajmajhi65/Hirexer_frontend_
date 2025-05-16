@@ -104,3 +104,22 @@ export function useTransferMembers() {
     },
   });
 }
+
+async function deleteWorkspaceMember({ workspace_id, member_id }) {
+  const response = await axiosInstance.delete(`/api/workspaces/${workspace_id}/members/${member_id}/delete/`);
+  return response.data;
+}
+
+export function useDeleteWorkspaceMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteWorkspaceMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workspace"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting member:", error);
+    },
+  });
+}

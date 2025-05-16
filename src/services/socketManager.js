@@ -2,29 +2,61 @@ import { useEffect, useRef } from "react";
 
 export class SocketManager {
   constructor(url) {
-    if (!url) {
-      console.warn("No WebSocket URL provided");
-      return;
-    }
-
     this.url = url;
     this.socket = null;
     this.callbacks = new Map();
     this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
+    this.maxReconnectAttempts = Infinity; // Keep trying to reconnect
     this.reconnectDelay = 1000;
-    this.pingInterval = 30000; // 30 seconds
+    this.pingInterval = 25000; // 25 seconds
     this.pingTimeout = null;
+    this.messageQueue = [];
+    this.isConnected = false;
 
     this.connect();
   }
 
   connect() {
     this.socket = new WebSocket(this.url);
-    this.socket.onopen = this.handleOpen.bind(this);
-    this.socket.onmessage = this.handleMessage.bind(this);
-    this.socket.onclose = this.handleClose.bind(this);
-    this.socket.onerror = this.handleError.bind(this);
+    
+    this.socket.onopen = () => {
+      this.isConnected = true;
+      this.reconnectAttempts = 0;
+      this.flushMessageQueue();
+      this.startPing();
+      console.log("WebSocket connected");
+    };
+    
+    this.socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const callback = this.callbacks.get(data.type);
+        if (callback) {
+          callback(data);
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    };
+    
+    this.socket.onclose = (event) => {
+      this.isConnected = false;
+      this.stopPing();
+      console.log("WebSocket disconnected:", event.code, event.reason);
+      this.attemptReconnect();
+    };
+    
+    this.socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      this.stopPing();
+    };
+  }
+
+  flushMessageQueue() {
+    while (this.messageQueue.length > 0 && this.isConnected) {
+      const message = this.messageQueue.shift();
+      this.send(message);
+    }
   }
 
   handleOpen() {

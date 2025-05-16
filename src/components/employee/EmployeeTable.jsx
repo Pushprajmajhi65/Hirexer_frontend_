@@ -34,7 +34,8 @@ const EmployeeTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-
+const storedWorkspace = JSON.parse(localStorage.getItem("selectedWorkspace"));
+const selectedWorkspaceId = storedWorkspace?.id;
   const { selectedWorkspace } = useWorkspace();
   const { data, isLoading, error } = useGetUserWorkspace();
 
@@ -168,13 +169,15 @@ const EmployeeTable = () => {
         </Table>
       </div>
 
-      {/* Dialogs */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="w-[400px]">
-          <DeleteDialog onClose={handleCloseDialog} employee={selectedEmployee} />
-        </DialogContent>
-      </Dialog>
-
+     <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+  <DialogContent className="w-[400px]">
+    <DeleteDialog
+      onClose={handleCloseDialog}
+      workspaceId={selectedWorkspaceId}   
+      memberId={selectedEmployee?.id}    
+    />
+  </DialogContent>
+</Dialog>
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <EditDialog onClose={handleCloseEditDialog} employee={selectedEmployee} />

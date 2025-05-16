@@ -227,7 +227,7 @@ const RTC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
       <div className="bg-gray-800 bg-opacity-90 p-4 flex justify-between items-center border-b border-gray-700">
-        <h1 className="text-white text-xl font-bold">Hirexer</h1>
+        <h1 className="text-white text-xl font-bold">Hirexer Meet</h1>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 bg-gray-700 px-3 py-1 rounded-full">
             <FaUserFriends className="text-green-400" />

@@ -94,6 +94,34 @@ export function useVerifyOTP() {
   });
 }
 
+export const useResendOTP = () => {
+  const navigate = useNavigate();
+  
+  return useMutation({
+    mutationFn: ({ email }) => axiosInstance.post("resend-otp/", { email }),
+    onSuccess: (data) => {
+      toast.success(data?.message || "OTP resent successfully");
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.error || "Failed to resend OTP");
+      if (error?.response?.status === 404) {
+        navigate("/signup");
+      }
+    },
+  });
+};
+
+
+export const verifyEmail = ({ email }) => {
+  return axiosInstance.post("verify-email/", { email });
+};
+
+export const useVerifyEmail = () => {
+  return useMutation(verifyEmail);
+};
+
+
+
 async function login({ email, password, remember }) {
   const response = await axiosInstance.post(
     "auth/login/",

@@ -20,6 +20,7 @@ const PageNotFound = lazy(() => import("./pages/PageNotFound"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const OTP = lazy(() => import("./pages/SignupOTP"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 /* const NewPassword = lazy(() => import("./pages/NewPassword")); */
 const ResetPasswordOTP = lazy(() => import("./pages/ResetPasswordOTP"));
@@ -37,6 +38,7 @@ const Feed = lazy(() => import("./pages/Feed"));
 const RTC = lazy(() => import("./pages/RTC"));
 const AppliedJobs = lazy(() => import("./pages/AppliedJobs"));
 const Chat = lazy(() => import("./pages/ChatPage"));
+
 
 const App = () => {
   const queryClient = new QueryClient({
@@ -95,6 +97,20 @@ const App = () => {
                     </PublicRoute>
                   }
                 />
+                 <Route
+                  path="/VerifyEmail"
+                  element={
+                    <PublicRoute>
+                      <VerifyEmail />
+                    </PublicRoute>
+                  }
+                />
+
+
+
+
+
+              
                 <Route path="/resetPassword" element={<ResetPassword />} />
                 <Route
                   path="/resetpasswordotp/:email"

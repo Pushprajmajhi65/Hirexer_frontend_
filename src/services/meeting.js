@@ -92,16 +92,44 @@ async function inviteMembers({ meeting_id, user_emails }) {
 
 export function useInviteMeeting() {
   const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: inviteMembers,
     mutationKey: ["inviteMembers"],
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["getUserMeetings"] });
       queryClient.refetchQueries({ queryKey: ["getUserMeetings"] });
-      toast.success(data.message);
+      
+      // Show success message
+      let toastMessage = data.message;
+      
+      // If there are errors, append them to the toast message
+      if (data.errors && data.errors.length > 0) {
+        toastMessage += '\n\nIssues with some invitations:';
+        data.errors.forEach(error => {
+          toastMessage += `\n• ${error}`;
+        });
+      }
+      
+      toast.success(toastMessage, {
+        duration: data.errors?.length ? 5000 : 3000,
+      });
     },
     onError: (error) => {
-      toast.error(error?.response.data.error || "Failed sending invitations");
+      const errorData = error.response?.data;
+      
+      if (errorData?.errors) {
+        const errorMessage = errorData.errors.join('\n• ');
+        toast.error(`Invitation errors:\n• ${errorMessage}`, {
+          duration: 5000,
+        });
+      } else if (errorData?.error) {
+        // If single error message
+        toast.error(errorData.error);
+      } else {
+        // Generic fallback
+        toast.error('Failed to send invitations. Please try again.');
+      }
     },
   });
 }

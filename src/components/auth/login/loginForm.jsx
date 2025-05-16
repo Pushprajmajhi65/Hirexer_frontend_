@@ -88,6 +88,12 @@ const LoginForm = () => {
           >
             Forgot password?
           </NavLink>
+           <NavLink
+            to="/VerifyEmail"
+            className="text-figmaPrimary font-semibold hover:underline"
+          >
+            Verify email
+          </NavLink>
         </section>
         <Button
           type="submit"

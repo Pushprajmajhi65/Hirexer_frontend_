@@ -5,9 +5,21 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import crossImage from "../../assets/cross.png";
+import { useDeleteWorkspaceMember } from "@/services/workspace";
 
-const DeleteDialog = ({ onClose }) => {
-  const handleDelete = () => {};
+const DeleteDialog = ({ onClose, workspaceId, memberId }) => {
+  const deleteMutation = useDeleteWorkspaceMember();
+
+  const handleDelete = () => {
+    deleteMutation.mutate(
+      { workspace_id: workspaceId, member_id: memberId },
+      {
+        onSuccess: () => {
+          onClose(); // close modal after success
+        },
+      }
+    );
+  };
 
   return (
     <div className="text-center flex items-center justify-center flex-col gap-3 p-4">
@@ -19,11 +31,19 @@ const DeleteDialog = ({ onClose }) => {
         You won't be able to undo this again
       </DialogDescription>
       <DialogFooter className="flex gap-2 w-full pt-3">
-        <Button variant="outline" className="flex-1 border-figmaPrimary text-figmaPrimary" onClick={onClose}>
+        <Button
+          variant="outline"
+          className="flex-1 border-figmaPrimary text-figmaPrimary"
+          onClick={onClose}
+        >
           Cancel
         </Button>
-        <Button onClick={handleDelete} className="flex-1 bg-figmaPrimaryDark">
-          Submit
+        <Button
+          onClick={handleDelete}
+          className="flex-1 bg-figmaPrimaryDark"
+          disabled={deleteMutation.isLoading}
+        >
+          {deleteMutation.isLoading ? "Deleting..." : "Submit"}
         </Button>
       </DialogFooter>
     </div>

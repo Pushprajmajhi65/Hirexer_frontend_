@@ -29,17 +29,23 @@ const MeetingTile = ({ el, refetch }) => {
   const handleInvite = (e) => {
     e.preventDefault();
     const emailList = emails.split(",").map((email) => email.trim());
+
+    if (emailList.length === 0 || emailList[0] === '') {
+      toast.error('Please enter at least one email address');
+      return;
+    }
     inviteMutation.mutate(
       { meeting_id: el.id, user_emails: emailList },
       {
         onSuccess: () => {
           setIsInviteOpen(false);
           setEmails("");
+
         },
+       
       }
     );
   };
-
   const handleDelete = () => {
     deleteMutation.mutate(
       { id: el.id },
@@ -50,7 +56,6 @@ const MeetingTile = ({ el, refetch }) => {
       }
     );
   };
-
   return (
     <div
       className={`h-auto min-h-[110px] ${
