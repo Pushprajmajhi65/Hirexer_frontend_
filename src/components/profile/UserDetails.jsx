@@ -18,6 +18,7 @@ import { Textarea } from "../ui/textarea";
 import { useGetUserData, useUpdateUserData } from "@/services/user";
 import Loader from "../shared/Loader";
 import toast from "react-hot-toast";
+import { X } from "lucide-react";
 
 const UserDetails = () => {
   const { 
@@ -25,7 +26,7 @@ const UserDetails = () => {
     handleSubmit, 
     control, 
     setValue,
-    formState: { errors } // Destructure errors here
+    formState: { errors }
   } = useForm();
   
   const mutation = useUpdateUserData();
@@ -36,17 +37,22 @@ const UserDetails = () => {
   const [existingPhoto, setExistingPhoto] = useState(null);
   const [photoRemoved, setPhotoRemoved] = useState(false);
   const [fileToUpload, setFileToUpload] = useState(null);
+  const [skills, setSkills] = useState([]);
+  const [currentSkill, setCurrentSkill] = useState("");
 
   useEffect(() => {
     if (userData) {
       setValue("username", userData.username || "");
       setValue("email", userData.email || "");
-      setValue("description", userData.description || "");
-      setValue("skills", userData.skills || "");
       setValue("role", userData.role || "");
       setValue("country", userData.country || "");
       setValue("time_zone", userData.time_zone || "");
       setExistingPhoto(userData.photo || null);
+      
+      // Initialize skills if they exist
+      if (userData.skills) {
+        setSkills(Array.isArray(userData.skills) ? userData.skills : [userData.skills]);
+      }
     }
   }, [userData, setValue]);
 
@@ -78,33 +84,30 @@ const UserDetails = () => {
       return;
     }
 
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      if (img.width > 800 || img.height > 400) {
-        toast.error("Image dimensions should not exceed 800x400px");
-        return;
-      }
-
-      setFileToUpload(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result);
-        setPhotoRemoved(false);
-      };
-      reader.readAsDataURL(file);
+    setFileToUpload(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result);
+      setPhotoRemoved(false);
     };
-
-    img.src = objectUrl;
+    reader.readAsDataURL(file);
   };
 
   const handleRemovePhoto = () => {
     setImagePreview(null);
     setFileToUpload(null);
     setPhotoRemoved(true);
+  };
+
+  const addSkill = () => {
+    if (currentSkill.trim() && !skills.includes(currentSkill.trim())) {
+      setSkills([...skills, currentSkill.trim()]);
+      setCurrentSkill("");
+    }
+  };
+
+  const removeSkill = (skillToRemove) => {
+    setSkills(skills.filter(skill => skill !== skillToRemove));
   };
 
   const onSubmit = async (data) => {
@@ -116,19 +119,6 @@ const UserDetails = () => {
           toast.error("File size should not exceed 2MB");
           return;
         }
-  
-        const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            if (img.width > 800 || img.height > 400) {
-              toast.error("Image dimensions should not exceed 800x400px");
-              reject(new Error("Invalid dimensions"));
-            }
-            resolve();
-          };
-          img.src = URL.createObjectURL(fileToUpload);
-        });
-  
         photoToSubmit = fileToUpload;
       } else if (photoRemoved) {
         photoToSubmit = null;
@@ -136,8 +126,7 @@ const UserDetails = () => {
   
       mutation.mutate({
         username: data.username,
-        description: data.description,
-        skills: data.skills,
+        skills: skills,
         role: data.role,
         country: data.country,
         time_zone: data.time_zone,
@@ -187,8 +176,8 @@ const UserDetails = () => {
                           message: "Username must not exceed 30 characters"
                         },
                         pattern: {
-                          value: /^[a-zA-Z0-9_]+$/,
-                          message: "Username can only contain letters, numbers and underscores"
+                          value: /^[a-zA-Z0-9_ ]+$/,
+                          message: "Username can only contain letters, numbers, spaces and underscores"
                         }
                       })}
                       className="w-full p-4 placeholder:text-[15px] bg-gray-50"
@@ -289,7 +278,7 @@ const UserDetails = () => {
                                 </span>
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                SVG, PNG, JPG or GIF (max. 800x400px)
+                                SVG, PNG, JPG or GIF (max. 2MB)
                               </p>
                             </section>
                           </div>
@@ -301,32 +290,48 @@ const UserDetails = () => {
 
                 <Wrapper>
                   <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
-                    Description
-                  </Label>
-                  <Textarea
-                    placeholder="Description"
-                    disabled={isLoading || mutation.isPending}
-                    {...register("description", { required: "Description is required" })}
-                    className="flex-1 max-w-[600px] max-h-[120px] p-4 placeholder:text-[15px] bg-gray-50"
-                  />
-                  {errors.description && (
-                    <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
-                  )}
-                </Wrapper>
-
-                <Wrapper>
-                  <Label className="min-w-[200px] xl:min-w-[300px] text-sm font-medium">
                     Skills
                   </Label>
-                  <Textarea
-                    placeholder="Skills"
-                    disabled={isLoading || mutation.isPending}
-                    {...register("skills", { required: "Skills are required" })}
-                    className="flex-1 max-w-[600px] max-h-[120px] p-4 placeholder:text-[15px] bg-gray-50"
-                  />
-                  {errors.skills && (
-                    <p className="text-red-500 text-sm mt-1">{errors.skills.message}</p>
-                  )}
+                  <div className="flex-1 max-w-[600px]">
+                    <div className="flex gap-2 mb-2">
+                      <Input
+                        type="text"
+                        value={currentSkill}
+                        onChange={(e) => setCurrentSkill(e.target.value)}
+                        placeholder="Add a skill"
+                        className="flex-1 p-4 placeholder:text-[15px] bg-gray-50"
+                        disabled={isLoading || mutation.isPending}
+                      />
+                      <Button
+                        type="button"
+                        onClick={addSkill}
+                        disabled={isLoading || mutation.isPending || !currentSkill.trim()}
+                        className="w-[100px]"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                    {skills.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {skills.map((skill) => (
+                          <div 
+                            key={skill} 
+                            className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full"
+                          >
+                            <span>{skill}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeSkill(skill)}
+                              className="text-gray-500 hover:text-red-500"
+                              disabled={isLoading || mutation.isPending}
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </Wrapper>
 
                 <Wrapper>
