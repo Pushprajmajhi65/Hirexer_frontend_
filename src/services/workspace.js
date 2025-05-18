@@ -67,8 +67,6 @@ export function useInviteWorkspace() {
   return useMutation({
     mutationFn: inviteWorkspace,
     onSuccess: (data) => {
-      /*   console.log(data); */
-      /*   navigate("/workspacesetupdone"); */
       queryClient.invalidateQueries({ queryKey: ["workspace"] });
       toast.success(data?.message);
     },

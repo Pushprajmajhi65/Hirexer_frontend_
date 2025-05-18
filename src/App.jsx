@@ -37,7 +37,7 @@ const Meeting = lazy(() => import("./pages/Meeting"));
 const Feed = lazy(() => import("./pages/Feed"));
 const RTC = lazy(() => import("./pages/RTC"));
 const AppliedJobs = lazy(() => import("./pages/AppliedJobs"));
-const Chat = lazy(() => import("./pages/ChatPage"));
+// const Chat = lazy(() => import("./pages/ChatPage"));
 
 
 const App = () => {
@@ -174,7 +174,7 @@ const App = () => {
                 >
                   <Route index element={<Overview />} />
                   <Route path="/overview" element={<Overview />} />
-
+{/* 
                   <Route
   path="/chat"
   element={
@@ -182,7 +182,7 @@ const App = () => {
       <Chat />
     </RoleProtectedRoute>
   }
-/>
+/> */}
                
                   
                   {/* Head Member Only Routes */}

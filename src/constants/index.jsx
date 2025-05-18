@@ -39,11 +39,11 @@ export const DashBoardMenuItems = [
     name: "Applied Jobs",
     allowedRoles: ["member"],
   },
-  {
-    icon: <MessageCircle size={20} />, 
-    name: "Chat",
-    allowedRoles: ["headmember", "member"],
-  }
+  // {
+  //   icon: <MessageCircle size={20} />, 
+  //   name: "Chat",
+  //   allowedRoles: ["headmember", "member"],
+  // }
 ];
 
 export const IndustryNames = [

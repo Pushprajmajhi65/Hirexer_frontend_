@@ -38,8 +38,6 @@ const TransferDialog = ({ onClose }) => {
       setIsDataReady(false);
     }
   }, [isLoading, selectedWorkspace, workspaces]);
-
-  // Reset selections when workspace changes
   useEffect(() => {
     if (isDataReady) {
       setSelectedMembers([]);

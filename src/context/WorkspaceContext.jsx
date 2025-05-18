@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const WorkspaceContext = createContext();
 
@@ -16,6 +16,7 @@ export function WorkspaceProvider({ children }) {
     return workspace?.user_role || null;
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
 
   const handleSelectWorkspace = (workspace) => {
     setSelectedWorkspace(workspace);
@@ -35,6 +36,8 @@ export function WorkspaceProvider({ children }) {
         userRole,
         isLoading,
         setIsLoading,
+        showTransferDialog,
+        setShowTransferDialog
       }}
     >
       {children}

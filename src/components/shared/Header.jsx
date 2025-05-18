@@ -1,7 +1,6 @@
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Bell, Settings } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -14,7 +13,23 @@ import { getInitial } from "@/utils/getInitial";
 
 const Header = () => {
   const location = useLocation();
-  const { userName } = useWorkspace();
+  const { userName, showTransferDialog, setShowTransferDialog } = useWorkspace();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  
+  useEffect(() => {
+    const selectedWorkspace = localStorage.getItem('selectedWorkspace');
+    if (!selectedWorkspace) {
+      setIsDropdownOpen(true);
+    }
+  }, []);
+
+  // Keep dropdown open if transfer dialog is open
+  useEffect(() => {
+    if (showTransferDialog) {
+      setIsDropdownOpen(true);
+    }
+  }, [showTransferDialog]);
+
   const backgroundClass =
     location.pathname === "/applications" || "/applied jobs"
       ? "bg-applicationBg"
@@ -28,7 +43,15 @@ const Header = () => {
       )}
     >
       <div className="flex items-center gap-6">
-        <DropdownMenu>
+        <DropdownMenu 
+          open={isDropdownOpen} 
+          onOpenChange={(open) => {
+            // Don't allow closing if transfer dialog is open
+            if (!showTransferDialog) {
+              setIsDropdownOpen(open);
+            }
+          }}
+        >
           <DropdownMenuTrigger className="outline-none">
             <div className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <Avatar className="h-10 w-10 border-2 border-gray-200">
@@ -44,15 +67,14 @@ const Header = () => {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[320px] p-2 mt-2">
-            <HeaderDialog />
+            <HeaderDialog 
+              isOpen={isDropdownOpen}
+              onOpenChange={setIsDropdownOpen}
+              showTransferDialog={showTransferDialog}
+              setShowTransferDialog={setShowTransferDialog}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
-        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <Bell className="h-5 w-5 text-gray-600" />
-        </button>
-        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <Settings className="h-5 w-5 text-gray-600" />
-        </button>
       </div>
     </div>
   );

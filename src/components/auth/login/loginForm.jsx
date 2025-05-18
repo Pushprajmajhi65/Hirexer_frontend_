@@ -59,8 +59,8 @@ const LoginForm = () => {
             error={errors?.password?.message}
             htmlFor="password"
             className="
-  custom_auth_label
-    "
+        custom_auth_label
+                     "
           >
             Password
           </Label>
@@ -88,12 +88,7 @@ const LoginForm = () => {
           >
             Forgot password?
           </NavLink>
-           <NavLink
-            to="/VerifyEmail"
-            className="text-figmaPrimary font-semibold hover:underline"
-          >
-            Verify email
-          </NavLink>
+           
         </section>
         <Button
           type="submit"
@@ -103,6 +98,8 @@ const LoginForm = () => {
           {mutation.isPending ? "Logging in" : "Log in"}
         </Button>
       </form>
+
+  
       <h2 className="text-muted-foreground text-sm">
         Don't have an account?
         <NavLink
@@ -112,6 +109,12 @@ const LoginForm = () => {
           {" "}
           Sign up
         </NavLink>
+       <NavLink
+            to="/VerifyEmail"
+            className="text-figmaPrimary font-semibold hover:underline pl-2"
+          >
+            Verify email
+          </NavLink>
       </h2>
     </div>
   );
