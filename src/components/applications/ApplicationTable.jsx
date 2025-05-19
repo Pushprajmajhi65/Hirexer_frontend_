@@ -14,7 +14,7 @@ import { useGetPostApplications } from "@/services/post";
 import { getStatusColor } from "@/utils/getStatusColor";
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import EditDialog from "./EditDialog";
-import { Edit , fileX2} from "lucide-react";
+import { Edit, FileX2 } from "lucide-react";
 
 const ApplicationTable = () => {
   const { id } = useParams();
