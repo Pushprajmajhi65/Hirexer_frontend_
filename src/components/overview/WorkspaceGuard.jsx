@@ -25,12 +25,19 @@ const WorkspaceGuard = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
-  if (!workspaces || workspaces.length === 0) {
+  // Check if workspaces is defined and empty
+  if (workspaces && workspaces.length === 0) {
     return <Navigate to="/onboarding" />;
   }
 
-  if (!selectedWorkspace && workspaces.length > 0) {
-    return <div>Initializing workspace...</div>; 
+  // If workspaces exists but selectedWorkspace isn't set yet (but workspaces exist)
+  if (workspaces && workspaces.length > 0 && !selectedWorkspace) {
+    return <Loader/>; // Or some other loading state
+  }
+
+  // If workspaces is still undefined (should be caught by isLoading, but just in case)
+  if (!workspaces) {
+    return <Loader/>;
   }
 
   return children;

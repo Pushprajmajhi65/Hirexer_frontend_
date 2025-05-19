@@ -18,6 +18,7 @@ import EditDialog from "./EditDialog";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useGetUserWorkspace } from "@/services/workspace";
 import { Skeleton } from "../ui/skeleton";
+import { CalendarX2 } from "lucide-react";
 
 const TableRowSkeleton = () => (
   <TableRow>
@@ -122,9 +123,19 @@ const selectedWorkspaceId = storedWorkspace?.id;
 
             {!isLoading && selectedWorkspace && members.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  No members found in this workspace
-                </TableCell>
+               <TableCell colSpan={8} className="py-10 text-center text-gray-500">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="mb-3 p-3 bg-gray-100 rounded-full">
+                    <CalendarX2 size={32} className="text-gray-400" />
+                  </div>
+                  <p className="text-base font-medium text-gray-800 mb-1">
+                    No members found in this workspace
+                  </p>
+                  <p className="text-sm text-gray-500 max-w-md">
+                    You can invite new members by clicking the <strong>"Invite"</strong> button above.
+                  </p>
+                </div>
+              </TableCell>
               </TableRow>
             )}
 

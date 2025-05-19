@@ -14,7 +14,7 @@ import { useGetPostApplications } from "@/services/post";
 import { getStatusColor } from "@/utils/getStatusColor";
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import EditDialog from "./EditDialog";
-import { Edit } from "lucide-react";
+import { Edit , fileX2} from "lucide-react";
 
 const ApplicationTable = () => {
   const { id } = useParams();
@@ -71,13 +71,19 @@ const ApplicationTable = () => {
     );
   }
 
-  if (!data?.length) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-gray-500">No applications found</p>
+if (!data?.length) {
+  return (
+    <div className="flex flex-col items-center justify-center py-10 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 max-w-md mx-auto">
+      <div className="mb-4 p-4 bg-gray-100 rounded-full">
+        <FileX2 size={40} className="text-gray-400" />
       </div>
-    );
-  }
+      <p className="text-lg font-semibold text-gray-800 mb-2">No applications found</p>
+      <p className="text-center text-sm text-gray-500">
+        You haven't received any applications yet. Please check back later.
+      </p>
+    </div>
+  );
+}
 
   return (
     <Table className="border border-gray-400 rounded-xl overflow-hidden">

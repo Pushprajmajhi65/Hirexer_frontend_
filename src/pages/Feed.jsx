@@ -6,6 +6,7 @@ import CreatePost from "@/components/Feeds/CreatePost";
 import { useGetPosts } from "@/services/post";
 import FeedTileSkeleton from "@/components/Feeds/FeedTileSkeleton";
 
+import { AlertCircle } from "lucide-react";
 const Feed = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -41,7 +42,17 @@ const Feed = () => {
         ) : sortedPosts && sortedPosts.length > 0 ? (
           sortedPosts.map((el) => <FeedTile key={el.id} el={el} />)
         ) : (
-          <p>No data available</p>
+        <div className="flex flex-col items-center justify-center p-8 border border-gray-200 rounded-xl bg-gray-50">
+          <div className="mb-4 p-4 bg-gray-100 rounded-full">
+            <AlertCircle className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No Posts Yet
+          </h3>
+          <p className="text-gray-500 text-center max-w-md">
+            It looks like there are no posts available at the moment. Once posts are created, they’ll appear here.
+          </p>
+        </div>
         )}
       </div>
     </div>
