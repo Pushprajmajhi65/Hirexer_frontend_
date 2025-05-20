@@ -14,7 +14,7 @@ import ApplyDialog from "./ApplyDialog";
 import EditPost from "./EditPost";
 import { Dialog } from "../ui/dialog";
 import { useWorkspace } from "@/context/WorkspaceContext";
-import { useAuth } from "@/context/AuthContext"; // Ensure this returns user info
+import { useAuth } from "@/context/AuthContext";
 
 const FeedTile = ({ el }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -22,8 +22,9 @@ const FeedTile = ({ el }) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const { selectedWorkspace } = useWorkspace();
+  const { user } = useAuth(); 
 
-  // Get username from localStorage
+  // Get username from localStorage with safety check
   const localUsername = typeof window !== "undefined" ? localStorage.getItem("hirexer_username") : null;
   const isOwner = el.user === localUsername;
 
@@ -36,6 +37,11 @@ const FeedTile = ({ el }) => {
     setDropdownOpen(false);
     setEditDialogOpen(true);
   };
+
+  // Safety check for el and its properties
+  if (!el || !el.workspace) {
+    return null; // or return a placeholder/skeleton
+  }
 
   return (
     <div>
@@ -62,8 +68,14 @@ const FeedTile = ({ el }) => {
 
             {selectedWorkspace?.id === el.workspace.id && (
               <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                <DropdownMenuTrigger>
-                  <EllipsisVertical />
+                <DropdownMenuTrigger asChild>
+                  <button 
+                    type="button" 
+                    className="p-1 rounded-full hover:bg-gray-100"
+                    aria-label="Post options"
+                  >
+                    <EllipsisVertical />
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="p-3 w-[210px]">
                   <FeedTileDialog
@@ -92,12 +104,15 @@ const FeedTile = ({ el }) => {
         </CardContent>
       </Card>
 
-      {/* Apply dialog */}
-      <ApplyDialog
-        id={el.id}
-        open={applyDialogOpen}
-        onClose={() => setApplyDialogOpen(false)}
-      />
+      {/* Apply dialog with null checks */}
+      {applyDialogOpen && (
+        <ApplyDialog
+          id={el.id}
+          open={applyDialogOpen}
+          onClose={() => setApplyDialogOpen(false)}
+          userEmail={user?.email || ''} 
+        />
+      )}
 
       {/* Edit dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

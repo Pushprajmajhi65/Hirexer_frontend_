@@ -66,7 +66,7 @@ const CreatePost = ({ onClose }) => {
     onDrop,
     accept: {
       "image/*": [".jpeg", ".jpg", ".png"],
-      "video/*": [".mp4", ".mov"],
+      // "video/*": [".mp4", ".mov"],
     },
     maxFiles: 1,
     multiple: false,

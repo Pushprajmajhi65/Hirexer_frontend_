@@ -67,8 +67,6 @@ const selectedWorkspaceId = storedWorkspace?.id;
       </div>
     );
   }
-
-  // ✅ Safely extract workspaces
   const workspaces = Array.isArray(data)
     ? data
     : data?.workspaces || [];

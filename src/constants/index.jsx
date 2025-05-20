@@ -103,10 +103,10 @@ export const timezoneData = [
 ];
 
 export const jobType = [
-  {
-    id: 1,
-    name: "Casual",
-  },
+  // {
+  //   id: 1,
+  //   name: "Casual",
+  // },
   { id: 2, name: "Job" },
 ];
 

@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import { FileIcon, X, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { UserCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,17 +17,35 @@ import {
 } from "../ui/select";
 import { experienceLevel } from "@/constants";
 import { useApplyPost } from "@/services/post";
-
 const MAX_FILE_SIZE = 150 * 1024 * 1024;
 
 const ApplyDialog = ({ open, onClose, id }) => {
-  const { selectedWorkspace, workspaces } = useWorkspace();
-  /*   const [message, setMessage] = useState(""); */
+  const { selectedWorkspace } = useWorkspace();
   const [cv, setCv] = useState(null);
   const [experience, setExperience] = useState("");
-
   const fileInputRef = useRef(null);
   const mutation = useApplyPost();
+
+  const getCurrentUserEmail = () => {
+    const localUsername = typeof window !== "undefined" 
+      ? localStorage.getItem("hirexer_username") 
+      : null;
+    if (selectedWorkspace?.members_details && localUsername) {
+      const currentUser = selectedWorkspace.members_details.find(
+        member => member.username === localUsername
+      );
+      if (currentUser?.email) {
+        return currentUser.email;
+      }
+    }
+    const userData = typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user"))
+      : null;
+    
+    return userData?.email || '';
+  };
+
+  const currentUserEmail = getCurrentUserEmail();
 
   const handleFileUpload = (file) => {
     if (file) {
@@ -47,7 +66,6 @@ const ApplyDialog = ({ open, onClose, id }) => {
       setCv(file);
     }
   };
-
   const handleDragOver = (e) => {
     e.preventDefault();
     e.currentTarget.classList.add("border-primary");
@@ -99,7 +117,7 @@ const ApplyDialog = ({ open, onClose, id }) => {
         cv,
         post: id,
         experience_level: experience,
-        email: selectedWorkspace.email,
+        email: currentUserEmail,
         applied_at: new Date(),
       },
       {
@@ -124,15 +142,14 @@ const ApplyDialog = ({ open, onClose, id }) => {
 
         <section className="flex items-center gap-2">
           <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
+            <UserCircle className="h-10 w-10 text-[#1ED0C2]" /> 
           </Avatar>
           <section className="">
             <h3 className="text-primary/90 font-[600] text-[14px]">
               {selectedWorkspace?.name}
             </h3>
             <p className="text-[12px] text-muted-foreground">
-              {selectedWorkspace.email}
+              {currentUserEmail}
             </p>
           </section>
         </section>
