@@ -4,15 +4,19 @@ import { Button } from "../ui/button";
 import { getInitial } from "@/utils/getInitial";
 import { useWorkspace } from "@/context/WorkspaceContext";
 
-const FeedTileDialog = ({ onApply, onEdit, isOwner }) => {
+const FeedTileDialog = ({ onApply, onEdit, isOwner = false }) => {
   const { selectedWorkspace } = useWorkspace();
+
+  console.log("FeedTileDialog - isOwner:", isOwner); // Debugging
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">
       <section className="flex items-center gap-2 w-full">
         <Avatar className="h-[40px] w-[40px] border-2 border-gray-200">
           <AvatarImage src="" alt="workspace" />
-          <AvatarFallback>{getInitial(selectedWorkspace?.name)}</AvatarFallback>
+          <AvatarFallback>
+            {getInitial(selectedWorkspace?.name)}
+          </AvatarFallback>
         </Avatar>
         <div>
           <h3 className="font-semibold text-sm capitalize">
@@ -24,14 +28,13 @@ const FeedTileDialog = ({ onApply, onEdit, isOwner }) => {
         </div>
       </section>
 
-      {/* Render Edit Post button only for owner */}
+      {/* Conditional button rendering based on ownership */}
       {isOwner ? (
         <Button className="w-full" onClick={onEdit}>
           Edit Post
         </Button>
       ) : (
-        // Render Apply Application button for non-owners
-        <Button  className="w-full" onClick={onApply}>
+        <Button className="w-full" onClick={onApply}>
           Apply Application
         </Button>
       )}

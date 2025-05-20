@@ -58,12 +58,7 @@ const AppliedJobsTile = ({ el }) => {
             </span>
           </h2>
         </section>
-        <section className="pt-3 flex items-center justify-between">
-          <a href={el.cv_url} className="text-figmaPrimary">
-            View Details
-          </a>
-          <Button variant="destructive">Delete</Button>
-        </section>
+       
       </CardContent>
     </Card>
   );
